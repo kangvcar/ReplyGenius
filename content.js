@@ -166,7 +166,7 @@
 
         // Create emoji icon
         const emojiSpan = document.createElement('span');
-        emojiSpan.textContent = '✍️';
+        emojiSpan.textContent = '🤖';
         emojiSpan.style.cssText = `
             font-size: 18px;
             opacity: 0.7;
@@ -708,14 +708,14 @@
             button.style.backgroundColor = 'rgba(29, 155, 240, 0.1)';
             emojiSpan.style.opacity = '1';
             // Change emoji to indicate processing
-            emojiSpan.textContent = '⏳';
+            emojiSpan.textContent = '🤖';
             emojiSpan.style.animation = 'pulse 1s ease-in-out infinite';
         } else {
             button.classList.remove('processing');
             button.style.backgroundColor = 'transparent';
             emojiSpan.style.opacity = '0.7';
             // Reset to original emoji
-            emojiSpan.textContent = '✍️';
+            emojiSpan.textContent = '🤖';
             emojiSpan.style.animation = 'none';
         }
     }
