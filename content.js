@@ -44,11 +44,37 @@
     // Load configuration from storage
     async function loadConfig() {
         try {
-            const result = await chrome.storage.sync.get();
-            config = result;
+            // Define default configuration to ensure all properties exist
+            const defaultConfig = {
+                baseUrl: 'https://api.openai.com/v1',
+                apiKey: '',
+                aiModel: 'gpt-3.5-turbo',
+                defaultStyle: '幽默风格',
+                defaultLanguage: '中文简体',
+                autoSubmit: true,
+                customStyles: [],
+                customModel: '',
+                firstTimeSetup: true
+            };
+            
+            const result = await chrome.storage.sync.get(defaultConfig);
+            config = { ...defaultConfig, ...result };
             console.log('XX: Configuration loaded', config);
+            console.log('XX: AutoSubmit setting:', config.autoSubmit);
         } catch (error) {
             console.error('XX: Failed to load configuration:', error);
+            // Fallback to default config
+            config = {
+                baseUrl: 'https://api.openai.com/v1',
+                apiKey: '',
+                aiModel: 'gpt-3.5-turbo',
+                defaultStyle: '幽默风格',
+                defaultLanguage: '中文简体',
+                autoSubmit: true,
+                customStyles: [],
+                customModel: '',
+                firstTimeSetup: true
+            };
         }
     }
 
@@ -57,7 +83,8 @@
         switch (message.type) {
             case 'CONFIG_UPDATED':
                 config = message.config;
-                console.log('XX: Configuration updated', config);
+                console.log('XX: Configuration updated via message', config);
+                console.log('XX: Updated AutoSubmit setting:', config.autoSubmit);
                 break;
         }
     }
@@ -170,6 +197,9 @@
             return;
         }
 
+        // Reload configuration to ensure we have the latest settings
+        await loadConfig();
+
         // Check if configuration is available
         if (!config || !config.apiKey || !config.baseUrl) {
             showNotification('请先在扩展设置中配置 AI 服务', 'warning');
@@ -235,9 +265,18 @@
         return content.trim();
     }
 
+    // Get the actual model to use for API calls
+    function getActiveModel() {
+        if (config.aiModel === 'custom' && config.customModel) {
+            return config.customModel.trim();
+        }
+        return config.aiModel || 'gpt-3.5-turbo';
+    }
+
     // Generate AI reply using configured service
     async function generateAIReply(tweetContent) {
         const prompt = buildPrompt(tweetContent);
+        const activeModel = getActiveModel();
         
         const response = await fetch(`${config.baseUrl}/chat/completions`, {
             method: 'POST',
@@ -246,7 +285,7 @@
                 'Authorization': `Bearer ${config.apiKey}`
             },
             body: JSON.stringify({
-                model: config.aiModel || 'gpt-3.5-turbo',
+                model: activeModel,
                 messages: [
                     {
                         role: 'system',
@@ -367,11 +406,14 @@
         await new Promise(resolve => setTimeout(resolve, 800));
         
         // Check if auto-submit is enabled
+        console.log('XX: Checking autoSubmit setting:', config.autoSubmit);
         if (config.autoSubmit) {
+            console.log('XX: AutoSubmit is enabled, submitting reply...');
             // Auto-submit the reply
             const submitSuccess = await submitReply();
             return submitSuccess;
         } else {
+            console.log('XX: AutoSubmit is disabled, only filling content...');
             // Just fill in the content, don't submit
             return 'filled_only';
         }

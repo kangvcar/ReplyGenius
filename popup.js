@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         baseUrl: document.getElementById('baseUrl'),
         apiKey: document.getElementById('apiKey'),
         aiModel: document.getElementById('aiModel'),
+        customModel: document.getElementById('customModel'),
+        customModelGroup: document.getElementById('customModelGroup'),
         toggleApiKey: document.getElementById('toggleApiKey'),
         testConnection: document.getElementById('testConnection'),
         
@@ -42,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         defaultLanguage: '中文简体',
         autoSubmit: true,
         customStyles: [],
+        customModel: '',
         firstTimeSetup: true
     };
 
@@ -87,9 +90,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.baseUrl.value = config.baseUrl;
         elements.apiKey.value = config.apiKey;
         elements.aiModel.value = config.aiModel;
+        elements.customModel.value = config.customModel || '';
         elements.defaultStyle.value = config.defaultStyle;
         elements.defaultLanguage.value = config.defaultLanguage;
         elements.autoSubmit.checked = config.autoSubmit;
+        
+        // Show/hide custom model input based on selection
+        toggleCustomModelInput();
         renderCustomStyles();
     }
 
@@ -133,10 +140,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Real-time config updates
         elements.baseUrl.addEventListener('input', (e) => config.baseUrl = e.target.value);
         elements.apiKey.addEventListener('input', (e) => config.apiKey = e.target.value);
-        elements.aiModel.addEventListener('change', (e) => config.aiModel = e.target.value);
+        elements.aiModel.addEventListener('change', (e) => {
+            config.aiModel = e.target.value;
+            toggleCustomModelInput();
+        });
+        elements.customModel.addEventListener('input', (e) => config.customModel = e.target.value);
         elements.defaultStyle.addEventListener('change', (e) => config.defaultStyle = e.target.value);
         elements.defaultLanguage.addEventListener('change', (e) => config.defaultLanguage = e.target.value);
-        elements.autoSubmit.addEventListener('change', (e) => config.autoSubmit = e.target.checked);
+        elements.autoSubmit.addEventListener('change', async (e) => {
+            config.autoSubmit = e.target.checked;
+            console.log('XX: AutoSubmit toggle changed to:', config.autoSubmit);
+            
+            // Immediately save and notify content script
+            await saveConfig();
+            
+            // Notify content script about the change
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab && (tab.url.includes('twitter.com') || tab.url.includes('x.com'))) {
+                    chrome.tabs.sendMessage(tab.id, { 
+                        type: 'CONFIG_UPDATED', 
+                        config: config 
+                    });
+                    console.log('XX: AutoSubmit config update sent to content script');
+                }
+            } catch (error) {
+                console.log('XX: Could not notify content script of autoSubmit change:', error);
+            }
+        });
+    }
+
+    // Toggle custom model input visibility
+    function toggleCustomModelInput() {
+        const isCustomSelected = elements.aiModel.value === 'custom';
+        elements.customModelGroup.style.display = isCustomSelected ? 'block' : 'none';
+        
+        // Clear custom model if not selected
+        if (!isCustomSelected) {
+            elements.customModel.value = '';
+            config.customModel = '';
+        }
+    }
+
+    // Get the actual model to use for API calls
+    function getActiveModel() {
+        if (config.aiModel === 'custom' && config.customModel) {
+            return config.customModel.trim();
+        }
+        return config.aiModel;
     }
 
     async function testAPIConnection() {
@@ -148,6 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         button.innerHTML = `⏳ 测试中...`;
 
         try {
+            const activeModel = getActiveModel();
             const response = await fetch(`${config.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -155,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Authorization': `Bearer ${config.apiKey}`
                 },
                 body: JSON.stringify({
-                    model: config.aiModel,
+                    model: activeModel,
                     messages: [{ role: 'user', content: 'Hello' }],
                     max_tokens: 5
                 })
@@ -307,6 +359,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!config.apiKey) {
                 showStatusMessage('请输入 API Key', 'warning');
+                return;
+            }
+
+            // Validate custom model if selected
+            if (config.aiModel === 'custom' && !config.customModel?.trim()) {
+                showStatusMessage('请输入自定义模型名称', 'warning');
                 return;
             }
 
