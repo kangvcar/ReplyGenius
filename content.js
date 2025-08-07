@@ -872,14 +872,26 @@ ${styleInfo.examples}
         
         if (loading) {
             button.classList.add('processing');
-            button.style.backgroundColor = 'rgba(29, 155, 240, 0.1)';
+            
+            // Add deep blue gradient background animation
+            button.style.background = 'linear-gradient(45deg, rgba(17, 82, 147, 0.3), rgba(17, 82, 147, 0.6))';
+            button.style.backgroundSize = '200% 200%';
+            button.style.animation = 'simpleGradient 2s ease-in-out infinite';
+            button.style.border = '1px solid rgba(17, 82, 147, 0.7)';
+            button.style.boxShadow = '0 2px 8px rgba(17, 82, 147, 0.3)';
+            
             emojiSpan.style.opacity = '1';
             // Change emoji to indicate processing
             emojiSpan.textContent = '🤖';
             emojiSpan.style.animation = 'pulse 1s ease-in-out infinite';
         } else {
             button.classList.remove('processing');
-            button.style.backgroundColor = 'transparent';
+            button.style.background = 'transparent';
+            button.style.backgroundSize = 'initial';
+            button.style.animation = 'none';
+            button.style.border = 'none';
+            button.style.boxShadow = 'none';
+            
             emojiSpan.style.opacity = '0.7';
             // Reset to original emoji
             emojiSpan.textContent = '🤖';
@@ -937,7 +949,7 @@ ${styleInfo.examples}
         }, 4000);
     }
 
-    // Add CSS for pulse animation
+    // Add CSS for animations
     const style = document.createElement('style');
     style.textContent = `
         @keyframes pulse {
@@ -949,6 +961,25 @@ ${styleInfo.examples}
                 opacity: 0.5; 
                 transform: scale(1.1); 
             }
+        }
+        
+        @keyframes simpleGradient {
+            0% { 
+                background-position: 0% 50%; 
+                opacity: 0.8;
+            }
+            50% { 
+                background-position: 100% 50%; 
+                opacity: 1;
+            }
+            100% { 
+                background-position: 0% 50%; 
+                opacity: 0.8;
+            }
+        }
+        
+        .xx-button.processing {
+            transition: all 0.3s ease-in-out !important;
         }
         
         .xx-button:active {
