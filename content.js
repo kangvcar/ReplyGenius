@@ -488,17 +488,20 @@ ${styleInfo.requirements.map(req => `• ${req}`).join('\n')}
 # 参考示例
 ${styleInfo.examples}
 
-# 让回复更像真人的技巧
-• 口语化表达：${humanElements.colloquial}、${humanElements.starter}
-• 个人化元素：${humanElements.personalExperience}
-• 情感表达：${humanElements.emotional}
-• 网络用语：${humanElements.internetSlang}
-• 简短回应：${humanElements.quickResponse}
-• 语言要有不完美性：偶尔省略、重复、犹豫
-• 避免过于完整的句式结构
-• 不要太理性，要有真实的情感倾向
-• 可以有个人偏好和小"偏见"
-• 语气要像在和朋友聊天，不是在写作文
+# 重要：智能使用人性化元素
+• 以下短语仅在合适的语境下选择性使用，不要强行插入：
+  - 口语表达：${humanElements.colloquial}、${humanElements.starter}  
+  - 个人元素：${humanElements.personalExperience}
+  - 情感词汇：${humanElements.emotional}
+  - 网络用语：${humanElements.internetSlang}
+  - 快速回应：${humanElements.quickResponse}
+
+# 使用原则
+• 优先回应推文内容本身，短语只是辅助
+• 如果短语与推文内容不匹配，宁可不用
+• 自然融入，不要生硬拼凑
+• 根据推文情绪选择合适的语气词
+• 保持回复的相关性和合理性
 
 # 字数限制要求（重要！）
 • 回复总长度：最短2个字，最长35个字
@@ -506,15 +509,20 @@ ${styleInfo.examples}
 • 宁可简短有力，也不要冗长无力
 • 计算所有汉字、标点、emoji的总数
 
-# 绝对要避免的AI特征
-• 不要用"作为一个..."开头
-• 不要过分政治正确和中性
-• 不要用过于正式的书面语
-• 不要结构过于工整
-• 不要给建议（除非被问到）
-• 不要解释太多，要像随口一说
+# 条件使用指导
+• 情感词汇：只在推文表达强烈情绪时使用（如抱怨→"扎心了"，开心→"太棒了"）
+• 个人经历：只在推文描述普遍经历时使用（如加班、考试、恋爱等）
+• 网络用语：只在轻松话题或年轻化内容时使用，严肃话题避免
+• 疑问句式：只在真正需要互动或表达困惑时使用
 
-请直接给出回复内容，严格控制在2-35个字以内，要让人感觉这是一个真实的人在自然表达。`;
+# 绝对要避免的
+• 不要用"作为一个..."开头
+• 不要机械地使用提供的短语
+• 不要在严肃话题中使用轻浮的网络用语  
+• 不要强行加入不相关的个人经历
+• 不要为了"像人"而牺牲回复的相关性
+
+请直接给出回复内容，严格控制在2-35个字以内，确保回复内容与推文高度相关且自然合理。`;
     }
 
     // Get system prompt based on configuration
