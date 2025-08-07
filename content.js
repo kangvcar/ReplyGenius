@@ -164,27 +164,37 @@
             margin-left: 12px;
         `;
 
-        // Create emoji icon
-        const emojiSpan = document.createElement('span');
-        emojiSpan.textContent = '🤖';
-        emojiSpan.style.cssText = `
-            font-size: 18px;
+        // Create SVG icon
+        const svgIcon = document.createElement('div');
+        svgIcon.innerHTML = `<svg width="18" height="18" viewBox="0 0 1024 1024" class="xx-icon-svg" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <path d="M832 384l8 1.6-1.6 8 1.6 3.2-4.8 3.2-44.8 161.6-16-4.8 40-147.2-260.8 144-158.4 284.8-11.2-6.4-6.4 6.4-176-176 11.2-11.2 163.2 163.2 147.2-265.6-294.4-297.6 11.2-11.2v-8h9.6l3.2-3.2 3.2 3.2L664 208l1.6 16-395.2 22.4 278.4 278.4 276.8-153.6 6.4 12.8z" fill="currentColor" />
+            <path d="M896 384c0 35.2-28.8 64-64 64s-64-28.8-64-64 28.8-64 64-64 64 28.8 64 64z m-656-32c-62.4 0-112-49.6-112-112s49.6-112 112-112 112 49.6 112 112-49.6 112-112 112z m304 336c-80 0-144-64-144-144s64-144 144-144 144 64 144 144-64 144-144 144z m-224 144c0-35.2 28.8-64 64-64s64 28.8 64 64-28.8 64-64 64-64-28.8-64-64z m-144-176c0-17.6 14.4-32 32-32s32 14.4 32 32-14.4 32-32 32-32-14.4-32-32z m448-440c0-22.4 17.6-40 40-40s40 17.6 40 40-17.6 40-40 40-40-17.6-40-40zM736 560c0-27.2 20.8-48 48-48s48 20.8 48 48-20.8 48-48 48-48-20.8-48-48z" fill="currentColor" />
+        </svg>`;
+        svgIcon.style.cssText = `
             opacity: 1;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            color: rgba(83, 100, 113, 1);
         `;
 
-        button.appendChild(emojiSpan);
+        button.appendChild(svgIcon);
 
         // Add hover effects
         button.addEventListener('mouseenter', () => {
             button.style.backgroundColor = 'rgba(29, 155, 240, 0.1)';
-            emojiSpan.style.opacity = '1';
+            svgIcon.style.opacity = '1';
+            svgIcon.style.color = 'rgba(29, 155, 240, 1)';
         });
 
         button.addEventListener('mouseleave', () => {
             if (!button.classList.contains('processing')) {
                 button.style.backgroundColor = 'transparent';
-                emojiSpan.style.opacity = '1';
+                svgIcon.style.opacity = '1';
+                svgIcon.style.color = 'rgba(83, 100, 113, 1)';
             }
         });
 
@@ -876,7 +886,7 @@ ${styleInfo.examples}
 
     // Set button loading state
     function setButtonLoadingState(button, loading) {
-        const emojiSpan = button.querySelector('span');
+        const svgIcon = button.querySelector('div');
         
         if (loading) {
             button.classList.add('processing');
@@ -922,12 +932,11 @@ ${styleInfo.examples}
             button.style.border = '1px solid rgba(17, 82, 147, 0.7)';
             button.style.boxShadow = '0 2px 8px rgba(17, 82, 147, 0.3)';
             
-            emojiSpan.style.opacity = '1';
-            emojiSpan.style.position = 'relative';
-            emojiSpan.style.zIndex = '2';
-            // Change emoji to indicate processing
-            emojiSpan.textContent = '🤖';
-            emojiSpan.style.animation = 'pulse 1s ease-in-out infinite';
+            svgIcon.style.opacity = '1';
+            svgIcon.style.position = 'relative';
+            svgIcon.style.zIndex = '2';
+            svgIcon.style.color = 'rgba(255, 255, 255, 0.9)';
+            svgIcon.style.animation = 'pulse 1s ease-in-out infinite';
         } else {
             button.classList.remove('processing');
             
@@ -944,12 +953,11 @@ ${styleInfo.examples}
             button.style.boxShadow = 'none';
             button.style.position = 'initial';
             
-            emojiSpan.style.opacity = '1';
-            emojiSpan.style.position = 'initial';
-            emojiSpan.style.zIndex = 'initial';
-            // Reset to original emoji
-            emojiSpan.textContent = '🤖';
-            emojiSpan.style.animation = 'none';
+            svgIcon.style.opacity = '1';
+            svgIcon.style.position = 'initial';
+            svgIcon.style.zIndex = 'initial';
+            svgIcon.style.color = 'rgba(83, 100, 113, 1)';
+            svgIcon.style.animation = 'none';
         }
     }
 
