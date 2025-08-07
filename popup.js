@@ -108,9 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             input.type = isPassword ? 'text' : 'password';
             
             const eyeIcon = document.getElementById('eyeIcon');
-            eyeIcon.innerHTML = isPassword 
-                ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>'
-                : '<path d="m1 1 22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.71 6.71a10.6 10.6 0 0 0-4.71 5.29s4 8 11 8c1.59 0 3.1-.29 4.29-.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.29 17.29A10.6 10.6 0 0 0 22 12s-4-8-11-8c-1.59 0-3.1.29-4.29.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9a3 3 0 1 0 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+            eyeIcon.textContent = isPassword ? '🙈' : '👁️';
         });
 
         // Test connection
@@ -147,13 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Show loading state
         button.disabled = true;
-        button.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            测试中...
-        `;
+        button.innerHTML = `⏳ 测试中...`;
 
         try {
             const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -205,10 +197,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function getStatusMessageClass(type) {
         const classes = {
-            success: 'border-green-200 bg-green-50 text-green-800',
-            error: 'border-red-200 bg-red-50 text-red-800',
-            warning: 'border-yellow-200 bg-yellow-50 text-yellow-800',
-            info: 'border-blue-200 bg-blue-50 text-blue-800'
+            success: 'border-green-200/50 bg-green-50/80 dark:bg-green-900/30 text-green-800 dark:text-green-200 backdrop-blur-sm',
+            error: 'border-red-200/50 bg-red-50/80 dark:bg-red-900/30 text-red-800 dark:text-red-200 backdrop-blur-sm',
+            warning: 'border-yellow-200/50 bg-yellow-50/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 backdrop-blur-sm',
+            info: 'border-blue-200/50 bg-blue-50/80 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 backdrop-blur-sm'
         };
         return classes[type] || classes.info;
     }
@@ -254,19 +246,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         const container = elements.customStylesList;
         container.innerHTML = '';
 
+        if (config.customStyles.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <div class="text-4xl mb-2">🎨</div>
+                    <p class="text-sm">还没有自定义风格</p>
+                    <p class="text-xs">点击上方按钮创建你的专属风格</p>
+                </div>
+            `;
+            return;
+        }
+
         config.customStyles.forEach(style => {
             const styleElement = document.createElement('div');
-            styleElement.className = 'flex items-center justify-between p-2 rounded border border-border bg-muted/50';
+            styleElement.className = 'flex items-center justify-between p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-2xl transition-all duration-200 hover:bg-white/70 dark:hover:bg-white/10';
             styleElement.innerHTML = `
-                <div>
-                    <div class="font-medium text-sm">${escapeHtml(style.name)}</div>
-                    ${style.description ? `<div class="text-xs text-muted-foreground">${escapeHtml(style.description)}</div>` : ''}
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <span class="text-lg text-white">🎭</span>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(style.name)}</div>
+                        ${style.description ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs truncate">${escapeHtml(style.description)}</div>` : ''}
+                    </div>
                 </div>
-                <button class="delete-style text-muted-foreground hover:text-destructive" data-id="${style.id}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M8,6V4a2,2 0 0 1 2,-2h4a2,2 0 0 1 2,2V6m3,0v14a2,2 0 0 1-2,2H7a2,2 0 0 1-2,-2V6h14z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                <button class="delete-style p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20" data-id="${style.id}" title="删除风格">
+                    <span class="text-sm">🗑️</span>
                 </button>
             `;
 
