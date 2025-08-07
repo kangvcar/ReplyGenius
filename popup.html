@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XX - Twitter AI Assistant</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body class="bg-background text-foreground">
+    <div class="w-[400px] max-h-[600px] overflow-y-auto">
+        <!-- Header -->
+        <div class="border-b border-border p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
+                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold">XX AI Assistant</h1>
+                    <p class="text-sm text-muted-foreground">智能推文回复生成器</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome/Status Message -->
+        <div id="statusMessage" class="hidden mx-6 mt-4">
+            <div class="rounded-lg border border-border p-3 text-sm"></div>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="p-6 text-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold mb-2">欢迎使用 XX</h2>
+            <p class="text-muted-foreground mb-4">开始配置您的 AI 助手，让 Twitter 互动更加智能和高效</p>
+            <button id="startSetup" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                开始设置
+            </button>
+        </div>
+
+        <!-- Main Configuration -->
+        <div id="configScreen" class="hidden p-6 space-y-6">
+            <!-- AI Service Configuration -->
+            <div class="rounded-lg border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6 pb-4">
+                    <h3 class="text-lg font-semibold leading-none tracking-tight">AI 服务配置</h3>
+                </div>
+                <div class="p-6 pt-0 space-y-4">
+                    <!-- Base URL -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Base URL</label>
+                        <input 
+                            type="url" 
+                            id="baseUrl" 
+                            placeholder="https://api.openai.com/v1"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                        <p class="text-xs text-muted-foreground">支持OpenAI兼容的API服务</p>
+                    </div>
+
+                    <!-- API Key -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">API Key</label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="apiKey" 
+                                placeholder="sk-..."
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                            <button type="button" id="toggleApiKey" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-muted-foreground">您的API密钥将安全地存储在本地</p>
+                    </div>
+
+                    <!-- AI Model -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">AI 模型</label>
+                        <select id="aiModel" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="claude-3-sonnet">Claude-3 Sonnet</option>
+                            <option value="claude-3-opus">Claude-3 Opus</option>
+                        </select>
+                    </div>
+
+                    <!-- Test Connection Button -->
+                    <button id="testConnection" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        测试连接
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reply Preferences -->
+            <div class="rounded-lg border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6 pb-4">
+                    <h3 class="text-lg font-semibold leading-none tracking-tight">回复偏好设置</h3>
+                </div>
+                <div class="p-6 pt-0 space-y-4">
+                    <!-- Default Style -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">默认回复风格</label>
+                        <select id="defaultStyle" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <option value="幽默风格" selected>幽默风格</option>
+                            <option value="正面积极">正面积极</option>
+                            <option value="专业严肃">专业严肃</option>
+                            <option value="友好亲切">友好亲切</option>
+                            <option value="提问互动">提问互动</option>
+                            <option value="赞同支持">赞同支持</option>
+                            <option value="理性分析">理性分析</option>
+                            <option value="简洁直接">简洁直接</option>
+                        </select>
+                    </div>
+
+                    <!-- Default Language -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">默认语言</label>
+                        <select id="defaultLanguage" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <option value="中文简体" selected>中文简体</option>
+                            <option value="中文繁体">中文繁体</option>
+                            <option value="English">English</option>
+                            <option value="日本語">日本語</option>
+                            <option value="한국어">한국어</option>
+                            <option value="Español">Español</option>
+                            <option value="Français">Français</option>
+                        </select>
+                    </div>
+
+                    <!-- Auto Submit Option -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">自动发布回复</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="autoSubmit" class="sr-only peer">
+                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <p class="text-xs text-muted-foreground">开启后点击✍️按钮将自动发布回复，关闭后仅填入回复内容</p>
+                    </div>
+
+                    <!-- Custom Styles -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">自定义风格</label>
+                            <button id="addCustomStyle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2 text-xs">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-1">
+                                    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                添加
+                            </button>
+                        </div>
+                        <div id="customStylesList" class="space-y-2">
+                            <!-- Custom styles will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button id="saveConfig" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="17,21 17,13 7,13 7,21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="7,3 7,8 15,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    保存配置
+                </button>
+                <button id="resetConfig" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
+                        <polyline points="23,4 23,10 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    重置
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Style Modal -->
+        <div id="customStyleModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-background rounded-lg border border-border w-80 p-6">
+                <h3 class="text-lg font-semibold mb-4">添加自定义风格</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">风格名称</label>
+                        <input type="text" id="customStyleName" placeholder="输入风格名称" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">风格描述</label>
+                        <textarea id="customStyleDescription" placeholder="描述这种回复风格的特点..." rows="3" class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button id="saveCustomStyle" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3">
+                        保存
+                    </button>
+                    <button id="cancelCustomStyle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

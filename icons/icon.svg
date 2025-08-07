@@ -1,0 +1,23 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="64" fill="url(#gradient)"/>
+  
+  <!-- AI spark/star icon -->
+  <path d="M64 20L70.5 50.5L101 57L70.5 63.5L64 94L57.5 63.5L27 57L57.5 50.5L64 20Z" fill="white" stroke="white" stroke-width="2"/>
+  
+  <!-- Smaller accent stars -->
+  <path d="M85 35L87.5 42.5L95 45L87.5 47.5L85 55L82.5 47.5L75 45L82.5 42.5L85 35Z" fill="white" opacity="0.8"/>
+  <path d="M43 75L45.5 82.5L53 85L45.5 87.5L43 95L40.5 87.5L33 85L40.5 82.5L43 75Z" fill="white" opacity="0.6"/>
+  
+  <!-- Tweet bubble accent -->
+  <path d="M88 75C88 79.4183 84.4183 83 80 83H50L42 91V83C37.5817 83 34 79.4183 34 75V65C34 60.5817 37.5817 57 42 57H80C84.4183 57 88 60.5817 88 65V75Z" fill="white" opacity="0.3"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1DA1F2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#667EEA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9333EA;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

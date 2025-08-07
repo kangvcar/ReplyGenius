@@ -1,0 +1,130 @@
+/* XX Chrome Extension - Content Script Styles for Twitter Integration */
+
+/* XX Button Styles */
+.xx-button {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px !important;
+    height: 36px !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    user-select: none !important;
+    margin-left: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.xx-button:hover {
+    background-color: rgba(29, 155, 240, 0.1) !important;
+}
+
+.xx-button:active {
+    transform: scale(0.95) !important;
+}
+
+.xx-button span {
+    font-size: 18px !important;
+    opacity: 0.7 !important;
+    transition: opacity 0.2s ease !important;
+    display: inline-block !important;
+}
+
+.xx-button:hover span {
+    opacity: 1 !important;
+}
+
+.xx-button.processing {
+    background-color: rgba(29, 155, 240, 0.1) !important;
+}
+
+.xx-button.processing span {
+    opacity: 1 !important;
+    animation: xx-pulse 1s ease-in-out infinite !important;
+}
+
+/* Pulse animation for loading state */
+@keyframes xx-pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 0.5; 
+        transform: scale(1.1); 
+    }
+}
+
+/* Notification styles */
+.xx-notification {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    z-index: 10000 !important;
+    max-width: 300px !important;
+    transition: all 0.3s ease !important;
+    pointer-events: auto !important;
+    line-height: 1.4 !important;
+}
+
+/* Dark mode support for Twitter */
+[data-theme="dark"] .xx-button span {
+    opacity: 0.8 !important;
+}
+
+[data-theme="dark"] .xx-button:hover span {
+    opacity: 1 !important;
+}
+
+/* Dim theme support */
+[data-theme="dim"] .xx-button span {
+    opacity: 0.8 !important;
+}
+
+[data-theme="dim"] .xx-button:hover span {
+    opacity: 1 !important;
+}
+
+/* Ensure button positioning in tweet actions */
+[data-testid="tweet"] [role="group"] {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+}
+
+/* Hide button on hover-sensitive devices if needed */
+@media (hover: none) {
+    .xx-button {
+        opacity: 0.8 !important;
+    }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 500px) {
+    .xx-notification {
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+    }
+    
+    .xx-button {
+        min-width: 32px !important;
+        height: 32px !important;
+        margin-left: 8px !important;
+    }
+    
+    .xx-button span {
+        font-size: 16px !important;
+    }
+}
