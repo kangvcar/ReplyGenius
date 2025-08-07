@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "XX - Twitter AI Assistant",
+  "name": "ReplyGenius - Twitter AI Assistant",
   "version": "1.0.0",
-  "description": "AI-powered intelligent reply generation for Twitter with seamless integration and smart context understanding.",
+  "description": "Genius-level AI replies for Twitter. Generate witty, contextual responses instantly with your personal AI assistant.",
   
   "permissions": [
     "storage",
@@ -32,7 +32,7 @@
   
   "action": {
     "default_popup": "popup.html",
-    "default_title": "XX - Twitter AI Assistant",
+    "default_title": "ReplyGenius - Twitter AI Assistant",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

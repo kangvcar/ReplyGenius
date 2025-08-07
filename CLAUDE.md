@@ -1,8 +1,8 @@
-# XX - Twitter AI助手Chrome扩展项目需求文档
+# ReplyGenius - Twitter AI助手Chrome扩展项目需求文档
 
 ## 项目概述
 
-XX是一个Chrome浏览器扩展，旨在为Twitter用户提供AI驱动的智能回复生成功能。该扩展无缝集成到Twitter界面中，帮助用户快速生成高质量、符合上下文的推文回复。
+ReplyGenius是一个Chrome浏览器扩展，旨在为Twitter用户提供AI驱动的智能回复生成功能。该扩展无缝集成到Twitter界面中，帮助用户快速生成高质量、符合上下文的推文回复。
 
 ## 核心功能
 
@@ -97,7 +97,7 @@ XX是一个Chrome浏览器扩展，旨在为Twitter用户提供AI驱动的智能
 
 ### 1. Chrome扩展结构
 ```
-XX/
+ReplyGenius/
 ├── manifest.json          # Manifest V3配置文件
 ├── popup.html             # shadcn/ui风格配置面板
 ├── popup.js               # 配置面板交互逻辑

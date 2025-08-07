@@ -1,4 +1,4 @@
-// XX Chrome Extension - Content Script for Twitter Integration
+// ReplyGenius Chrome Extension - Content Script for Twitter Integration
 (function() {
     'use strict';
 
@@ -24,7 +24,7 @@
 
     // Initialize the extension
     async function init() {
-        console.log('XX: Initializing Twitter integration...');
+        console.log('ReplyGenius: Initializing Twitter integration...');
         
         // Load configuration
         await loadConfig();
@@ -38,7 +38,7 @@
         // Listen for configuration updates
         chrome.runtime.onMessage.addListener(handleMessage);
         
-        console.log('XX: Twitter integration initialized successfully');
+        console.log('ReplyGenius: Twitter integration initialized successfully');
     }
 
     // Load configuration from storage
@@ -59,10 +59,10 @@
             
             const result = await chrome.storage.sync.get(defaultConfig);
             config = { ...defaultConfig, ...result };
-            console.log('XX: Configuration loaded', config);
-            console.log('XX: AutoSubmit setting:', config.autoSubmit);
+            console.log('ReplyGenius: Configuration loaded', config);
+            console.log('ReplyGenius: AutoSubmit setting:', config.autoSubmit);
         } catch (error) {
-            console.error('XX: Failed to load configuration:', error);
+            console.error('ReplyGenius: Failed to load configuration:', error);
             // Fallback to default config
             config = {
                 baseUrl: 'https://api.openai.com/v1',
@@ -83,8 +83,8 @@
         switch (message.type) {
             case 'CONFIG_UPDATED':
                 config = message.config;
-                console.log('XX: Configuration updated via message', config);
-                console.log('XX: Updated AutoSubmit setting:', config.autoSubmit);
+                console.log('ReplyGenius: Configuration updated via message', config);
+                console.log('ReplyGenius: Updated AutoSubmit setting:', config.autoSubmit);
                 break;
         }
     }
@@ -169,7 +169,7 @@
         emojiSpan.textContent = '🤖';
         emojiSpan.style.cssText = `
             font-size: 18px;
-            opacity: 0.7;
+            opacity: 1;
             transition: opacity 0.2s;
         `;
 
@@ -184,7 +184,7 @@
         button.addEventListener('mouseleave', () => {
             if (!button.classList.contains('processing')) {
                 button.style.backgroundColor = 'transparent';
-                emojiSpan.style.opacity = '0.7';
+                emojiSpan.style.opacity = '1';
             }
         });
 
@@ -233,7 +233,7 @@
             }
             
         } catch (error) {
-            console.error('XX: Error generating reply:', error);
+            console.error('ReplyGenius: Error generating reply:', error);
             showNotification('❌ 生成回复失败: ' + error.message, 'error');
         } finally {
             setButtonLoadingState(button, false);
@@ -581,14 +581,14 @@ ${styleInfo.examples}
         await new Promise(resolve => setTimeout(resolve, 800));
         
         // Check if auto-submit is enabled
-        console.log('XX: Checking autoSubmit setting:', config.autoSubmit);
+        console.log('ReplyGenius: Checking autoSubmit setting:', config.autoSubmit);
         if (config.autoSubmit) {
-            console.log('XX: AutoSubmit is enabled, submitting reply...');
+            console.log('ReplyGenius: AutoSubmit is enabled, submitting reply...');
             // Auto-submit the reply
             const submitSuccess = await submitReply();
             return submitSuccess;
         } else {
-            console.log('XX: AutoSubmit is disabled, only filling content...');
+            console.log('ReplyGenius: AutoSubmit is disabled, only filling content...');
             // Just fill in the content, don't submit
             return 'filled_only';
         }
@@ -623,13 +623,13 @@ ${styleInfo.examples}
                             type: 'input'
                         };
                         onChange(syntheticEvent);
-                        console.log('XX: Content inserted using React onChange handler');
+                        console.log('ReplyGenius: Content inserted using React onChange handler');
                         return;
                     }
                 }
             }
         } catch (error) {
-            console.log('XX: React handler method failed:', error);
+            console.log('ReplyGenius: React handler method failed:', error);
         }
 
         // Method 2: Use execCommand if available
@@ -640,14 +640,14 @@ ${styleInfo.examples}
             
             // Insert the new text
             if (document.execCommand('insertText', false, text)) {
-                console.log('XX: Content inserted using execCommand');
+                console.log('ReplyGenius: Content inserted using execCommand');
                 
                 // Trigger additional events
                 editor.dispatchEvent(new Event('input', { bubbles: true }));
                 return;
             }
         } catch (error) {
-            console.log('XX: execCommand failed, trying alternative method');
+            console.log('ReplyGenius: execCommand failed, trying alternative method');
         }
 
         // Method 3: Use Clipboard API (most reliable for Draft.js)
@@ -665,14 +665,14 @@ ${styleInfo.examples}
             // Execute paste command
             const pasteResult = document.execCommand('paste');
             if (pasteResult) {
-                console.log('XX: Content inserted using clipboard paste');
+                console.log('ReplyGenius: Content inserted using clipboard paste');
                 
                 // Trigger additional events to ensure Twitter recognizes the change
                 editor.dispatchEvent(new Event('input', { bubbles: true }));
                 return;
             }
         } catch (clipboardError) {
-            console.log('XX: Clipboard method failed:', clipboardError);
+            console.log('ReplyGenius: Clipboard method failed:', clipboardError);
         }
 
         // Method 4: Simulate typing with keyboard events
@@ -724,10 +724,10 @@ ${styleInfo.examples}
                 await new Promise(resolve => setTimeout(resolve, 5));
             }
             
-            console.log('XX: Content inserted using keyboard simulation');
+            console.log('ReplyGenius: Content inserted using keyboard simulation');
             
         } catch (error) {
-            console.error('XX: Keyboard simulation failed:', error);
+            console.error('ReplyGenius: Keyboard simulation failed:', error);
             
             // Method 5: Direct DOM manipulation as last resort
             try {
@@ -751,22 +751,22 @@ ${styleInfo.examples}
                     editor.dispatchEvent(new Event('input', { bubbles: true }));
                     editor.dispatchEvent(new Event('change', { bubbles: true }));
                     
-                    console.log('XX: Content inserted using DOM manipulation');
+                    console.log('ReplyGenius: Content inserted using DOM manipulation');
                 } else {
                     throw new Error('无法找到内容容器');
                 }
                 
             } catch (domError) {
-                console.error('XX: DOM manipulation failed:', domError);
+                console.error('ReplyGenius: DOM manipulation failed:', domError);
                 
                 // Final fallback: Set textContent directly
                 try {
                     editor.textContent = text;
                     editor.dispatchEvent(new Event('input', { bubbles: true }));
                     editor.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('XX: Content inserted using textContent fallback');
+                    console.log('ReplyGenius: Content inserted using textContent fallback');
                 } catch (finalError) {
-                    console.error('XX: All methods failed:', finalError);
+                    console.error('ReplyGenius: All methods failed:', finalError);
                     throw new Error('所有文本插入方法都失败了');
                 }
             }
@@ -824,7 +824,7 @@ ${styleInfo.examples}
         }
         
         if (tweetButton && !tweetButton.disabled && !tweetButton.getAttribute('aria-disabled')) {
-            console.log('XX: Submitting reply automatically...');
+            console.log('ReplyGenius: Submitting reply automatically...');
             tweetButton.click();
             
             // Wait a moment to see if submission was successful
@@ -833,14 +833,14 @@ ${styleInfo.examples}
             // Check if the reply dialog is still open (which would indicate failure)
             const dialogStillOpen = document.querySelector(SELECTORS.composeTextarea);
             if (!dialogStillOpen) {
-                console.log('XX: Reply submitted successfully');
+                console.log('ReplyGenius: Reply submitted successfully');
                 return true;
             } else {
-                console.log('XX: Reply submission may have failed, dialog still open');
+                console.log('ReplyGenius: Reply submission may have failed, dialog still open');
                 return false;
             }
         } else {
-            console.log('XX: Could not find enabled tweet button');
+            console.log('ReplyGenius: Could not find enabled tweet button');
             throw new Error('无法找到可用的发送按钮');
         }
     }
@@ -881,6 +881,40 @@ ${styleInfo.examples}
         if (loading) {
             button.classList.add('processing');
             
+            // Create circular progress ring around the button
+            const progressRing = document.createElement('div');
+            progressRing.className = 'progress-ring';
+            progressRing.innerHTML = `
+                <svg width="44" height="44" class="progress-svg">
+                    <circle cx="22" cy="22" r="18" 
+                            fill="none" 
+                            stroke="rgba(17, 82, 147, 0.2)" 
+                            stroke-width="2"/>
+                    <circle cx="22" cy="22" r="18" 
+                            fill="none" 
+                            stroke="rgba(17, 82, 147, 0.8)" 
+                            stroke-width="2"
+                            stroke-dasharray="113.1"
+                            stroke-dashoffset="113.1"
+                            class="progress-circle"
+                            transform="rotate(-90 22 22)"/>
+                </svg>
+            `;
+            
+            // Position the progress ring
+            progressRing.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 1;
+            `;
+            
+            // Add progress ring to button
+            button.style.position = 'relative';
+            button.appendChild(progressRing);
+            
             // Add deep blue gradient background animation
             button.style.background = 'linear-gradient(45deg, rgba(17, 82, 147, 0.3), rgba(17, 82, 147, 0.6))';
             button.style.backgroundSize = '200% 200%';
@@ -889,18 +923,30 @@ ${styleInfo.examples}
             button.style.boxShadow = '0 2px 8px rgba(17, 82, 147, 0.3)';
             
             emojiSpan.style.opacity = '1';
+            emojiSpan.style.position = 'relative';
+            emojiSpan.style.zIndex = '2';
             // Change emoji to indicate processing
             emojiSpan.textContent = '🤖';
             emojiSpan.style.animation = 'pulse 1s ease-in-out infinite';
         } else {
             button.classList.remove('processing');
+            
+            // Remove progress ring
+            const progressRing = button.querySelector('.progress-ring');
+            if (progressRing) {
+                progressRing.remove();
+            }
+            
             button.style.background = 'transparent';
             button.style.backgroundSize = 'initial';
             button.style.animation = 'none';
             button.style.border = 'none';
             button.style.boxShadow = 'none';
+            button.style.position = 'initial';
             
-            emojiSpan.style.opacity = '0.7';
+            emojiSpan.style.opacity = '1';
+            emojiSpan.style.position = 'initial';
+            emojiSpan.style.zIndex = 'initial';
             // Reset to original emoji
             emojiSpan.textContent = '🤖';
             emojiSpan.style.animation = 'none';
@@ -984,6 +1030,26 @@ ${styleInfo.examples}
                 background-position: 0% 50%; 
                 opacity: 0.8;
             }
+        }
+        
+        @keyframes progressSpin {
+            0% { 
+                stroke-dashoffset: 113.1;
+                transform: rotate(-90deg);
+            }
+            50% { 
+                stroke-dashoffset: 28.3;
+                transform: rotate(90deg);
+            }
+            100% { 
+                stroke-dashoffset: 113.1;
+                transform: rotate(270deg);
+            }
+        }
+        
+        .progress-circle {
+            animation: progressSpin 2s ease-in-out infinite;
+            transform-origin: center;
         }
         
         .xx-button.processing {

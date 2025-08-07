@@ -1,4 +1,4 @@
-// XX Chrome Extension - Popup Configuration Panel
+// ReplyGenius Chrome Extension - Popup Configuration Panel
 document.addEventListener('DOMContentLoaded', async () => {
     // DOM Elements
     const elements = {
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.defaultLanguage.addEventListener('change', (e) => config.defaultLanguage = e.target.value);
         elements.autoSubmit.addEventListener('change', async (e) => {
             config.autoSubmit = e.target.checked;
-            console.log('XX: AutoSubmit toggle changed to:', config.autoSubmit);
+            console.log('ReplyGenius: AutoSubmit toggle changed to:', config.autoSubmit);
             
             // Immediately save and notify content script
             await saveConfig();
@@ -162,10 +162,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         type: 'CONFIG_UPDATED', 
                         config: config 
                     });
-                    console.log('XX: AutoSubmit config update sent to content script');
+                    console.log('ReplyGenius: AutoSubmit config update sent to content script');
                 }
             } catch (error) {
-                console.log('XX: Could not notify content script of autoSubmit change:', error);
+                console.log('ReplyGenius: Could not notify content script of autoSubmit change:', error);
             }
         });
     }
