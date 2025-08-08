@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ReplyGenius - AI Twitter Assistant",
   "version": "1.0.0",
-  "description": "Generate witty, contextual Twitter replies instantly with AI. Choose from 8 reply styles, support multiple languages, and seamlessly integrate with Twitter's interface.",
+  "description": "Generate witty, contextual Twitter replies instantly with AI. Choose from 8 styles and multiple languages.",
   
   "permissions": [
     "storage",
