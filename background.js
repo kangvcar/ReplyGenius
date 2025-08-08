@@ -51,6 +51,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     switch (message.type) {
         case 'API_REQUEST':
+            // Add sender tab ID to message for rate limiting
+            message.tabId = sender?.tab?.id;
             handleAPIRequest(message, sendResponse);
             return true;
             
@@ -82,10 +84,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Handle API requests through background script (Chrome Web Store compliance)
 async function handleAPIRequest(message, sendResponse) {
     try {
-        const { config, payload, endpoint = 'chat/completions' } = message;
+        const { config, payload, endpoint = 'chat/completions', tabId } = message;
         
-        // Rate limiting check
-        if (!checkRateLimit(message.tabId || sender?.tab?.id || 'unknown')) {
+        // Rate limiting check - use tabId from message or fallback to 'popup'
+        const rateLimitId = tabId || message.tabId || 'popup';
+        if (!checkRateLimit(rateLimitId)) {
             throw new Error('请求过于频繁，请稍后再试');
         }
         
@@ -99,6 +102,11 @@ async function handleAPIRequest(message, sendResponse) {
         }
         
         console.log('ReplyGenius: Making API request to:', `${config.baseUrl}/${endpoint}`);
+        console.log('ReplyGenius: Request payload:', { 
+            model: payload.model,
+            messages: payload.messages?.length,
+            max_tokens: payload.max_tokens
+        });
         
         const response = await fetch(`${config.baseUrl}/${endpoint}`, {
             method: 'POST',
@@ -259,7 +267,8 @@ async function handleTestAPI(config, sendResponse) {
             type: 'API_REQUEST',
             config,
             payload,
-            endpoint: 'chat/completions'
+            endpoint: 'chat/completions',
+            tabId: 'test' // Special identifier for API testing
         };
         
         // Create a promise to handle the async response
@@ -308,7 +317,8 @@ async function handleGenerateReply(message, sendResponse) {
             type: 'API_REQUEST',
             config,
             payload,
-            endpoint: 'chat/completions'
+            endpoint: 'chat/completions',
+            tabId: 'generate' // Special identifier for reply generation
         };
         
         const result = await new Promise((resolve) => {
