@@ -97,7 +97,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Show/hide custom model input based on selection
         toggleCustomModelInput();
+        
+        // Update style dropdown with custom styles
+        updateStyleDropdown();
+        
         renderCustomStyles();
+    }
+
+    function updateStyleDropdown() {
+        const styleSelect = elements.defaultStyle;
+        
+        // Get current selection
+        const currentValue = styleSelect.value;
+        
+        // Clear existing custom options (keep built-in ones)
+        const builtInOptions = styleSelect.querySelectorAll('option:not([data-custom])');
+        styleSelect.innerHTML = '';
+        
+        // Re-add built-in options
+        const builtInStyles = [
+            { value: '幽默风格', text: '😄 幽默风格' },
+            { value: '正面积极', text: '✨ 正面积极' },
+            { value: '专业严肃', text: '🎯 专业严肃' },
+            { value: '友好亲切', text: '🤗 友好亲切' },
+            { value: '提问互动', text: '❓ 提问互动' },
+            { value: '赞同支持', text: '👍 赞同支持' },
+            { value: '理性分析', text: '🔍 理性分析' },
+            { value: '简洁直接', text: '⚡ 简洁直接' }
+        ];
+        
+        builtInStyles.forEach(style => {
+            const option = document.createElement('option');
+            option.value = style.value;
+            option.textContent = style.text;
+            styleSelect.appendChild(option);
+        });
+        
+        // Add separator if there are custom styles
+        if (config.customStyles && config.customStyles.length > 0) {
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '────── 自定义风格 ──────';
+            styleSelect.appendChild(separator);
+            
+            // Add custom styles
+            config.customStyles.forEach(customStyle => {
+                const option = document.createElement('option');
+                option.value = customStyle.name;
+                option.textContent = `🎭 ${customStyle.name}`;
+                option.setAttribute('data-custom', 'true');
+                styleSelect.appendChild(option);
+            });
+        }
+        
+        // Restore selection
+        styleSelect.value = currentValue;
+        
+        // If current selection is not available, reset to default
+        if (styleSelect.value !== currentValue) {
+            styleSelect.value = '幽默风格';
+            config.defaultStyle = '幽默风格';
+        }
     }
 
     function setupEventListeners() {
@@ -125,6 +185,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.addCustomStyle.addEventListener('click', showCustomStyleModal);
         elements.saveCustomStyle.addEventListener('click', saveCustomStyleHandler);
         elements.cancelCustomStyle.addEventListener('click', hideCustomStyleModal);
+        
+        // Style template buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.template-btn')) {
+                const templateType = e.target.closest('.template-btn').dataset.template;
+                applyStyleTemplate(templateType);
+            }
+        });
 
         // Configuration actions
         elements.saveConfig.addEventListener('click', saveConfigHandler);
@@ -265,6 +333,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function hideCustomStyleModal() {
         elements.customStyleModal.classList.add('hidden');
+        // Clear form when hiding
+        elements.customStyleName.value = '';
+        elements.customStyleDescription.value = '';
+        
+        // Reset modal state
+        editingStyleId = null;
+        const modalHeader = elements.customStyleModal.querySelector('.modal-header h3');
+        modalHeader.textContent = '创建自定义风格';
+        elements.saveCustomStyle.textContent = '保存风格';
+    }
+
+    function applyStyleTemplate(templateType) {
+        const templates = {
+            healing: {
+                name: '温暖治愈',
+                description: '用温柔关怀的语言给人以慰藉和鼓励，多使用治愈系词汇，传递温暖正能量，让人感受到被理解和关爱'
+            },
+            tech: {
+                name: '技术极客',
+                description: '从技术和理性角度分析问题，适当使用专业术语，保持客观严谨的态度，提供有建设性的技术见解'
+            },
+            poetry: {
+                name: '诗意文艺',
+                description: '用优美文雅的语言表达观点，偶尔引用诗词或使用比喻修辞，营造唯美意境，展现文学素养'
+            },
+            motivational: {
+                name: '激励鸡汤',
+                description: '充满正能量和激励性，用振奋人心的话语鼓舞他人，传递积极向上的人生态度，激发奋斗精神'
+            }
+        };
+        
+        const template = templates[templateType];
+        if (template) {
+            elements.customStyleName.value = template.name;
+            elements.customStyleDescription.value = template.description;
+        }
     }
 
     function saveCustomStyleHandler() {
@@ -276,22 +380,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Check for duplicate names
-        if (config.customStyles.some(style => style.name === name)) {
+        // Check for duplicate names (excluding current editing style)
+        const duplicateStyle = config.customStyles.find(style => 
+            style.name === name && style.id !== editingStyleId
+        );
+        
+        if (duplicateStyle) {
             showStatusMessage('该风格名称已存在', 'warning');
             return;
         }
 
-        // Add new custom style
-        config.customStyles.push({
-            id: Date.now().toString(),
-            name,
-            description
-        });
+        if (editingStyleId) {
+            // Update existing style
+            const styleIndex = config.customStyles.findIndex(s => s.id === editingStyleId);
+            if (styleIndex !== -1) {
+                const oldName = config.customStyles[styleIndex].name;
+                config.customStyles[styleIndex].name = name;
+                config.customStyles[styleIndex].description = description;
+                
+                // Update selected style if it was the one being edited
+                if (config.defaultStyle === oldName) {
+                    config.defaultStyle = name;
+                    elements.defaultStyle.value = name;
+                }
+                
+                renderCustomStyles();
+                updateStyleDropdown();
+                hideCustomStyleModal();
+                showStatusMessage(`已更新风格: ${name}`, 'success');
+            }
+        } else {
+            // Add new custom style
+            config.customStyles.push({
+                id: Date.now().toString(),
+                name,
+                description
+            });
 
-        renderCustomStyles();
-        hideCustomStyleModal();
-        showStatusMessage(`已添加自定义风格: ${name}`, 'success');
+            renderCustomStyles();
+            updateStyleDropdown(); // Update dropdown to include new style
+            hideCustomStyleModal();
+            showStatusMessage(`已添加自定义风格: ${name}`, 'success');
+        }
     }
 
     function renderCustomStyles() {
@@ -319,15 +449,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div>
                         <div class="font-semibold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(style.name)}</div>
-                        ${style.description ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs truncate">${escapeHtml(style.description)}</div>` : ''}
+                        ${style.description ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs truncate" title="${escapeHtml(style.description)}">${escapeHtml(style.description)}</div>` : ''}
                     </div>
                 </div>
-                <button class="delete-style p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20" data-id="${style.id}" title="删除风格">
-                    <span class="text-sm">🗑️</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button class="edit-style p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20" data-id="${style.id}" title="编辑风格">
+                        <span class="text-sm">✏️</span>
+                    </button>
+                    <button class="delete-style p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20" data-id="${style.id}" title="删除风格">
+                        <span class="text-sm">🗑️</span>
+                    </button>
+                </div>
             `;
 
-            // Add delete event listener
+            // Add event listeners
+            styleElement.querySelector('.edit-style').addEventListener('click', (e) => {
+                const styleId = e.currentTarget.dataset.id;
+                editCustomStyle(styleId);
+            });
+            
             styleElement.querySelector('.delete-style').addEventListener('click', (e) => {
                 const styleId = e.currentTarget.dataset.id;
                 deleteCustomStyle(styleId);
@@ -337,9 +477,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Global variable to track editing state
+    let editingStyleId = null;
+
+    function editCustomStyle(styleId) {
+        const style = config.customStyles.find(s => s.id === styleId);
+        if (!style) return;
+        
+        // Set editing state
+        editingStyleId = styleId;
+        
+        // Fill form with existing values
+        elements.customStyleName.value = style.name;
+        elements.customStyleDescription.value = style.description;
+        
+        // Update modal title
+        const modalHeader = elements.customStyleModal.querySelector('.modal-header h3');
+        modalHeader.textContent = '编辑自定义风格';
+        
+        // Update save button text
+        elements.saveCustomStyle.textContent = '更新风格';
+        
+        // Show modal
+        elements.customStyleModal.classList.remove('hidden');
+    }
+
     function deleteCustomStyle(styleId) {
+        const styleName = config.customStyles.find(s => s.id === styleId)?.name;
         config.customStyles = config.customStyles.filter(style => style.id !== styleId);
+        
+        // If deleted style was selected, reset to default
+        if (config.defaultStyle === styleName) {
+            config.defaultStyle = '幽默风格';
+            elements.defaultStyle.value = '幽默风格';
+        }
+        
         renderCustomStyles();
+        updateStyleDropdown(); // Update dropdown to remove deleted style
         showStatusMessage('已删除自定义风格', 'success');
     }
 

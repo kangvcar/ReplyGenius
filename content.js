@@ -385,6 +385,22 @@
 
     // Get style-specific prompt instructions
     function getStyleInstructions(style) {
+        // Check if it's a custom style first
+        const customStyle = config.customStyles?.find(s => s.name === style);
+        if (customStyle) {
+            return {
+                personality: `你是Twitter上独具${customStyle.name}特色的用户`,
+                requirements: [
+                    customStyle.description || '按照自定义风格要求回复',
+                    '保持风格的一致性和独特性',
+                    '确保回复符合风格定义的特点',
+                    '自然表达，避免生硬套用'
+                ],
+                examples: '根据风格描述灵活运用合适的表达方式'
+            };
+        }
+
+        // Default built-in styles
         const stylePrompts = {
             '幽默风格': {
                 personality: '你是Twitter上那个总能用幽默化解严肃话题的高手',

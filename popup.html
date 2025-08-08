@@ -179,17 +179,59 @@
                 <div class="modal-form">
                     <div class="form-group">
                         <label>✏️ 风格名称</label>
-                        <input type="text" id="customStyleName" placeholder="例如：温暖治愈风格">
+                        <input type="text" id="customStyleName" placeholder="例如：温暖治愈风格" maxlength="20">
+                        <small>最多20个字符</small>
                     </div>
+                    
                     <div class="form-group">
                         <label>📝 风格描述</label>
-                        <textarea id="customStyleDescription" placeholder="描述这种风格的特点，例如：用温暖的语言给予鼓励和支持..." rows="4"></textarea>
+                        <textarea id="customStyleDescription" placeholder="详细描述这种风格的特点、语气、表达方式等..." rows="4" maxlength="200"></textarea>
+                        <small>描述风格的特点，例如：用温暖的语言给予鼓励和支持，多使用治愈系词汇...</small>
+                    </div>
+                    
+                    <!-- Style Templates -->
+                    <div class="form-group">
+                        <label>💡 风格模板</label>
+                        <div class="style-templates">
+                            <button type="button" class="template-btn" data-template="healing">
+                                <span class="template-emoji">🌸</span>
+                                <div class="template-info">
+                                    <div class="template-name">温暖治愈</div>
+                                    <div class="template-desc">用温柔话语治愈人心</div>
+                                </div>
+                            </button>
+                            
+                            <button type="button" class="template-btn" data-template="tech">
+                                <span class="template-emoji">💻</span>
+                                <div class="template-info">
+                                    <div class="template-name">技术极客</div>
+                                    <div class="template-desc">专业技术视角分析</div>
+                                </div>
+                            </button>
+                            
+                            <button type="button" class="template-btn" data-template="poetry">
+                                <span class="template-emoji">🌙</span>
+                                <div class="template-info">
+                                    <div class="template-name">诗意文艺</div>
+                                    <div class="template-desc">文雅诗意的表达</div>
+                                </div>
+                            </button>
+                            
+                            <button type="button" class="template-btn" data-template="motivational">
+                                <span class="template-emoji">⚡</span>
+                                <div class="template-info">
+                                    <div class="template-name">激励鸡汤</div>
+                                    <div class="template-desc">充满正能量的激励</div>
+                                </div>
+                            </button>
+                        </div>
+                        <small>点击模板快速填入，也可以完全自定义</small>
                     </div>
                 </div>
                 
                 <div class="modal-actions">
                     <button id="cancelCustomStyle" class="btn-secondary">取消</button>
-                    <button id="saveCustomStyle" class="btn-primary">保存</button>
+                    <button id="saveCustomStyle" class="btn-primary">保存风格</button>
                 </div>
             </div>
         </div>
