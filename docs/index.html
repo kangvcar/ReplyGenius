@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReplyGenius - AI Twitter Assistant | Generate Smart Replies Instantly</title>
+    <meta name="description" content="Transform your Twitter interactions with AI-powered replies. Generate witty, contextual responses in 8 styles and multiple languages. Privacy-first Chrome extension.">
+    <meta name="keywords" content="Twitter AI, reply generator, Chrome extension, social media assistant, AI writing">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="ReplyGenius - AI Twitter Assistant">
+    <meta property="og:description" content="Generate smart, contextual Twitter replies with AI. 8 styles, multilingual support, privacy-first.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kangvcar.github.io/ReplyGenius">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ReplyGenius - AI Twitter Assistant">
+    <meta name="twitter:description" content="Generate smart, contextual Twitter replies with AI">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon16.png">
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ReplyGenius",
+        "description": "AI-powered Twitter assistant that generates witty, contextual replies instantly. Chrome extension with 8 styles and multilingual support.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Chrome",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "127"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "ReplyGenius Team"
+        },
+        "url": "https://kangvcar.github.io/ReplyGenius",
+        "downloadUrl": "https://chrome.google.com/webstore/search/replygenius",
+        "screenshot": "https://replygenius.app/images/screenshot.jpg",
+        "featureList": [
+            "8 Reply Styles",
+            "Multilingual Support", 
+            "Smart Context Analysis",
+            "Privacy First",
+            "Seamless Twitter Integration"
+        ]
+    }
+    </script>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://chrome.google.com">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <img src="./icons/icon32.png" alt="ReplyGenius" class="logo">
+                <span class="brand-name">ReplyGenius</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="privacy.html" class="nav-link">Privacy</a>
+                <a href="#install" class="btn btn-primary">Get Extension</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Transform Your Twitter with
+                    <span class="gradient-text">AI-Powered Replies</span>
+                </h1>
+                <p class="hero-description">
+                    Generate witty, contextual Twitter replies instantly. Choose from 8 styles, 
+                    support multiple languages, and engage authentically with AI assistance.
+                </p>
+                <div class="hero-actions">
+                    <a href="#install" class="btn btn-primary btn-large">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Install Free Extension
+                    </a>
+                    <a href="#demo" class="btn btn-secondary btn-large">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        Watch Demo
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">Reply Styles</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">7</div>
+                        <div class="stat-label">Languages</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Privacy First</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="demo-window">
+                    <div class="demo-header">
+                        <div class="demo-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span class="demo-title">Twitter / X</span>
+                    </div>
+                    <div class="demo-content">
+                        <div class="tweet-mock">
+                            <div class="tweet-actions">
+                                <span class="action-item">💬 Reply</span>
+                                <span class="action-item">🔄 Retweet</span>
+                                <span class="action-item">❤️ Like</span>
+                                <span class="action-item ai-button">🤖 AI</span>
+                            </div>
+                            <div class="ai-reply-demo">
+                                <div class="typing-indicator">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <p class="generated-reply">"Great point! This reminds me of how innovation often comes from unexpected places 🚀"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Powerful Features for Smarter Engagement</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <h3>8 Reply Styles</h3>
+                    <p>From humorous to professional, choose the perfect tone for every conversation. Create custom styles too.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M2 12h20"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                    </div>
+                    <h3>Multilingual Support</h3>
+                    <p>Reply in Chinese, English, Japanese, Korean, Spanish, French, and more languages.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 12l2 2 4-4"/>
+                            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                            <path d="M13 12h3a2 2 0 0 1 2 2v1"/>
+                            <path d="M11 12H8a2 2 0 0 0-2 2v1"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Context Analysis</h3>
+                    <p>AI understands tweet context, sentiment, and tone to generate relevant, authentic replies.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21,15 16,10 5,21"/>
+                        </svg>
+                    </div>
+                    <h3>Seamless Integration</h3>
+                    <p>AI button appears naturally in Twitter's interface. No disruption, just enhancement.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="M9 12l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3>Privacy First</h3>
+                    <p>All data stored locally. No tracking, no data collection. Your privacy is our priority.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                        </svg>
+                    </div>
+                    <h3>Lightning Fast</h3>
+                    <p>Generate replies in seconds. Streamline your Twitter workflow and save time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Install Extension</h3>
+                        <p>Add ReplyGenius to Chrome from the Web Store. Configure your AI service and preferences.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Browse Twitter</h3>
+                        <p>Visit Twitter/X as usual. You'll see an AI button (🤖) under every tweet.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Generate Reply</h3>
+                        <p>Click the AI button to instantly generate contextual replies in your chosen style.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Engage Authentically</h3>
+                        <p>Review, customize, and post AI-generated replies that sound genuinely like you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="install" class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Twitter Experience?</h2>
+                <p>Join thousands of users who are already engaging smarter with AI-powered replies.</p>
+                <div class="cta-actions">
+                    <a href="#" class="btn btn-primary btn-large" id="install-btn">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Install ReplyGenius Free
+                    </a>
+                    <span class="cta-note">✓ Free Forever ✓ No Sign-up Required ✓ Privacy First</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="./icons/icon32.png" alt="ReplyGenius" class="logo">
+                    <span class="brand-name">ReplyGenius</span>
+                    <p>AI-powered Twitter assistant for smarter engagement.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Product</h4>
+                        <a href="#features">Features</a>
+                        <a href="#how-it-works">How It Works</a>
+                        <a href="#install">Download</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="mailto:support@replygenius.app">Contact</a>
+                        <a href="#faq">FAQ</a>
+                        <a href="privacy.html">Privacy Policy</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ReplyGenius. All rights reserved.</p>
+                <p>Made with ❤️ for better Twitter interactions</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

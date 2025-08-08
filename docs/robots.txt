@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kangvcar.github.io/ReplyGenius/sitemap.xml
