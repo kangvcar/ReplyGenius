@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Event Listeners
     setupEventListeners();
+    
+    // Setup real-time validation
+    setupRealTimeValidation();
 
     // Functions
     async function loadConfig() {
@@ -185,12 +188,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.addCustomStyle.addEventListener('click', showCustomStyleModal);
         elements.saveCustomStyle.addEventListener('click', saveCustomStyleHandler);
         elements.cancelCustomStyle.addEventListener('click', hideCustomStyleModal);
+        document.getElementById('closeStyleModal').addEventListener('click', hideCustomStyleModal);
         
         // Style template buttons
         document.addEventListener('click', (e) => {
             if (e.target.closest('.template-btn')) {
                 const templateType = e.target.closest('.template-btn').dataset.template;
                 applyStyleTemplate(templateType);
+                
+                // Visual feedback for template selection
+                document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('selected'));
+                e.target.closest('.template-btn').classList.add('selected');
             }
         });
 
@@ -260,14 +268,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function testAPIConnection() {
         const button = elements.testConnection;
-        const originalText = button.innerHTML;
         
+        // Clear any previous validation messages
+        clearValidationMessage(elements.baseUrl);
+        clearValidationMessage(elements.apiKey);
+        clearValidationMessage(elements.customModel);
+
+        // Validate inputs before testing
+        if (!config.baseUrl) {
+            showValidationMessage(elements.baseUrl, '请输入Base URL', 'error');
+            elements.baseUrl.focus();
+            return;
+        }
+
+        if (!validateUrl(config.baseUrl)) {
+            showValidationMessage(elements.baseUrl, 'URL格式不正确', 'error');
+            elements.baseUrl.focus();
+            return;
+        }
+
+        if (!config.apiKey) {
+            showValidationMessage(elements.apiKey, '请输入API Key', 'error');
+            elements.apiKey.focus();
+            return;
+        }
+
+        if (!validateApiKey(config.apiKey)) {
+            showValidationMessage(elements.apiKey, 'API Key格式不正确', 'error');
+            elements.apiKey.focus();
+            return;
+        }
+
+        const activeModel = getActiveModel();
+        if (!activeModel) {
+            const targetElement = config.aiModel === 'custom' ? elements.customModel : elements.aiModel;
+            showValidationMessage(targetElement, '请选择或输入模型', 'error');
+            targetElement.focus();
+            return;
+        }
+
         // Show loading state
+        button.classList.add('btn-loading');
         button.disabled = true;
-        button.innerHTML = `⏳ 测试中...`;
 
         try {
-            const activeModel = getActiveModel();
             const response = await fetch(`${config.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -282,31 +326,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (response.ok) {
-                showStatusMessage('连接成功！API 配置有效', 'success');
+                // Show success validation for inputs
+                showValidationMessage(elements.baseUrl, 'URL连接成功', 'success');
+                showValidationMessage(elements.apiKey, 'API Key有效', 'success');
+                if (config.aiModel === 'custom') {
+                    showValidationMessage(elements.customModel, '模型可用', 'success');
+                }
+                showStatusMessage('✅ 连接成功！API 配置有效', 'success');
             } else {
                 const errorData = await response.json();
-                throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+                
+                // Show specific error based on response
+                if (response.status === 401) {
+                    showValidationMessage(elements.apiKey, 'API Key无效或已过期', 'error');
+                } else if (response.status === 404) {
+                    showValidationMessage(elements.baseUrl, 'API端点不存在', 'error');
+                } else if (errorMessage.includes('model')) {
+                    const targetElement = config.aiModel === 'custom' ? elements.customModel : elements.aiModel;
+                    showValidationMessage(targetElement, '模型不可用', 'error');
+                }
+                
+                throw new Error(errorMessage);
             }
         } catch (error) {
-            showStatusMessage(`连接失败: ${error.message}`, 'error');
+            console.error('API Connection test failed:', error);
+            showStatusMessage(`❌ 连接失败: ${error.message}`, 'error');
         } finally {
             // Restore button state
+            button.classList.remove('btn-loading');
             button.disabled = false;
-            button.innerHTML = originalText;
         }
     }
 
     function showStatusMessage(message, type = 'info') {
         const messageContainer = elements.statusMessage;
-        const messageContent = messageContainer.querySelector('div');
+        const messageContent = messageContainer.querySelector('.status-content');
+        
+        // Clear existing classes
+        messageContainer.className = 'status-message';
         
         // Set message content
         messageContent.textContent = message;
         
-        // Set appropriate styling based on type
-        messageContent.className = `rounded-lg border p-3 text-sm ${getStatusMessageClass(type)}`;
+        // Add appropriate class
+        messageContainer.classList.add(`status-${type}`);
         
-        // Show message
+        // Show message with animation
         messageContainer.classList.remove('hidden');
         
         // Auto-hide after 5 seconds
@@ -315,33 +381,241 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 5000);
     }
 
-    function getStatusMessageClass(type) {
-        const classes = {
-            success: 'border-green-200/50 bg-green-50/80 dark:bg-green-900/30 text-green-800 dark:text-green-200 backdrop-blur-sm',
-            error: 'border-red-200/50 bg-red-50/80 dark:bg-red-900/30 text-red-800 dark:text-red-200 backdrop-blur-sm',
-            warning: 'border-yellow-200/50 bg-yellow-50/80 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 backdrop-blur-sm',
-            info: 'border-blue-200/50 bg-blue-50/80 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 backdrop-blur-sm'
-        };
-        return classes[type] || classes.info;
+    async function saveConfigHandler() {
+        const button = elements.saveConfig;
+        
+        try {
+            // Clear previous validation messages
+            document.querySelectorAll('.validation-message').forEach(msg => msg.remove());
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error', 'success', 'warning');
+            });
+
+            let hasErrors = false;
+
+            // Validate all required fields
+            if (!config.baseUrl) {
+                showValidationMessage(elements.baseUrl, '请输入Base URL', 'error');
+                hasErrors = true;
+            } else if (!validateUrl(config.baseUrl)) {
+                showValidationMessage(elements.baseUrl, 'URL格式不正确', 'error');
+                hasErrors = true;
+            }
+
+            if (!config.apiKey) {
+                showValidationMessage(elements.apiKey, '请输入API Key', 'error');
+                hasErrors = true;
+            } else if (!validateApiKey(config.apiKey)) {
+                showValidationMessage(elements.apiKey, 'API Key格式不正确', 'error');
+                hasErrors = true;
+            }
+
+            if (config.aiModel === 'custom' && !config.customModel?.trim()) {
+                showValidationMessage(elements.customModel, '请输入自定义模型名称', 'error');
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
+                showStatusMessage('⚠️ 请检查并修正表单错误', 'warning');
+                return;
+            }
+
+            // Show loading state
+            button.classList.add('btn-loading');
+            button.disabled = true;
+
+            // Save configuration
+            await saveConfig();
+            
+            // Show success validation for all fields
+            showValidationMessage(elements.baseUrl, '已保存', 'success');
+            showValidationMessage(elements.apiKey, '已保存', 'success');
+            if (config.aiModel === 'custom' && config.customModel) {
+                showValidationMessage(elements.customModel, '已保存', 'success');
+            }
+            
+            showStatusMessage('✅ 配置已保存成功', 'success');
+            
+            // Notify content script about config update
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab && (tab.url.includes('twitter.com') || tab.url.includes('x.com'))) {
+                    chrome.tabs.sendMessage(tab.id, { 
+                        type: 'CONFIG_UPDATED', 
+                        config: config 
+                    });
+                }
+            } catch (error) {
+                console.log('Could not notify content script:', error);
+            }
+        } catch (error) {
+            console.error('Save config failed:', error);
+            showStatusMessage('❌ 保存失败: ' + error.message, 'error');
+        } finally {
+            // Restore button state
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+        }
+    }
+
+    // Enhanced validation and status functions
+    function showValidationMessage(element, message, type = 'error') {
+        // Remove any existing validation message
+        const existingMessage = element.parentNode.querySelector('.validation-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        // Update form group class
+        const formGroup = element.closest('.form-group');
+        if (formGroup) {
+            formGroup.classList.remove('error', 'success', 'warning');
+            if (type !== 'clear') {
+                formGroup.classList.add(type);
+            }
+        }
+
+        // Add validation message if provided
+        if (message && type !== 'clear') {
+            const messageElement = document.createElement('div');
+            messageElement.className = `validation-message ${type}`;
+            messageElement.textContent = message;
+            element.parentNode.appendChild(messageElement);
+        }
+    }
+
+    function clearValidationMessage(element) {
+        showValidationMessage(element, '', 'clear');
+    }
+
+    function validateUrl(url) {
+        try {
+            new URL(url);
+            return url.startsWith('http://') || url.startsWith('https://');
+        } catch {
+            return false;
+        }
+    }
+
+    function validateApiKey(key) {
+        return key && key.trim().length >= 10;
+    }
+
+    function validateModel(model) {
+        return model && model.trim().length > 0;
+    }
+
+    // Real-time validation
+    function setupRealTimeValidation() {
+        // Base URL validation
+        elements.baseUrl.addEventListener('blur', () => {
+            const url = elements.baseUrl.value.trim();
+            if (url && !validateUrl(url)) {
+                showValidationMessage(elements.baseUrl, '请输入有效的URL地址', 'error');
+            } else if (url) {
+                showValidationMessage(elements.baseUrl, 'URL格式正确', 'success');
+            } else {
+                clearValidationMessage(elements.baseUrl);
+            }
+        });
+
+        elements.baseUrl.addEventListener('input', () => {
+            if (elements.baseUrl.value.trim()) {
+                clearValidationMessage(elements.baseUrl);
+            }
+        });
+
+        // API Key validation
+        elements.apiKey.addEventListener('blur', () => {
+            const key = elements.apiKey.value.trim();
+            if (key && !validateApiKey(key)) {
+                showValidationMessage(elements.apiKey, 'API密钥长度至少10个字符', 'error');
+            } else if (key) {
+                showValidationMessage(elements.apiKey, 'API密钥格式正确', 'success');
+            } else {
+                clearValidationMessage(elements.apiKey);
+            }
+        });
+
+        elements.apiKey.addEventListener('input', () => {
+            if (elements.apiKey.value.trim()) {
+                clearValidationMessage(elements.apiKey);
+            }
+        });
+
+        // Custom model validation
+        elements.customModel.addEventListener('blur', () => {
+            if (elements.aiModel.value === 'custom') {
+                const model = elements.customModel.value.trim();
+                if (!validateModel(model)) {
+                    showValidationMessage(elements.customModel, '请输入模型名称', 'error');
+                } else {
+                    showValidationMessage(elements.customModel, '模型名称正确', 'success');
+                }
+            }
+        });
+
+        // Custom style name validation
+        elements.customStyleName.addEventListener('input', () => {
+            const name = elements.customStyleName.value.trim();
+            const maxLength = 20;
+            const remaining = maxLength - name.length;
+            
+            if (name.length > maxLength) {
+                showValidationMessage(elements.customStyleName, `名称过长，请删除${name.length - maxLength}个字符`, 'error');
+            } else if (remaining <= 5 && remaining > 0) {
+                showValidationMessage(elements.customStyleName, `还可输入${remaining}个字符`, 'warning');
+            } else if (name.length > 0) {
+                clearValidationMessage(elements.customStyleName);
+            }
+        });
     }
 
     function showCustomStyleModal() {
+        // Reset form
         elements.customStyleName.value = '';
         elements.customStyleDescription.value = '';
+        
+        // Clear template selection
+        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('selected'));
+        
+        // Clear validation messages
+        clearValidationMessage(elements.customStyleName);
+        clearValidationMessage(elements.customStyleDescription);
+        
+        // Show modal
         elements.customStyleModal.classList.remove('hidden');
+        
+        // Focus on name input
+        setTimeout(() => elements.customStyleName.focus(), 100);
     }
 
     function hideCustomStyleModal() {
         elements.customStyleModal.classList.add('hidden');
+        
         // Clear form when hiding
         elements.customStyleName.value = '';
         elements.customStyleDescription.value = '';
         
+        // Clear template selection
+        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('selected'));
+        
+        // Clear validation messages
+        clearValidationMessage(elements.customStyleName);
+        clearValidationMessage(elements.customStyleDescription);
+        
         // Reset modal state
         editingStyleId = null;
-        const modalHeader = elements.customStyleModal.querySelector('.modal-header h3');
+        const modalHeader = elements.customStyleModal.querySelector('.modal-title-section h3');
         modalHeader.textContent = '创建自定义风格';
-        elements.saveCustomStyle.textContent = '保存风格';
+        elements.saveCustomStyle.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17,21 17,13 7,13 7,21"/>
+                <polyline points="7,3 7,8 15,8"/>
+            </svg>
+            保存风格
+        `;
     }
 
     function applyStyleTemplate(templateType) {
@@ -361,6 +635,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             motivational: {
                 name: '激励鸡汤',
                 description: '充满正能量和激励性，用振奋人心的话语鼓舞他人，传递积极向上的人生态度，激发奋斗精神'
+            },
+            witty: {
+                name: '机智幽默',
+                description: '运用聪明机智的语言和幽默感，通过巧妙的表达方式和风趣的观点来回应，让人会心一笑'
+            },
+            philosophical: {
+                name: '哲学思辨',
+                description: '从深层次哲学角度思考问题，提出发人深省的观点和质疑，引导深度思考和理性讨论'
             }
         };
         
@@ -368,6 +650,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (template) {
             elements.customStyleName.value = template.name;
             elements.customStyleDescription.value = template.description;
+            
+            // Clear any existing validation messages
+            clearValidationMessage(elements.customStyleName);
+            clearValidationMessage(elements.customStyleDescription);
         }
     }
 
@@ -430,10 +716,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (config.customStyles.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <div class="text-4xl mb-2">🎨</div>
-                    <p class="text-sm">还没有自定义风格</p>
-                    <p class="text-xs">点击上方按钮创建你的专属风格</p>
+                <div class="custom-styles-empty">
+                    <div class="empty-icon">🎭</div>
+                    <h4>还没有自定义风格</h4>
+                    <p>点击"添加风格"按钮创建你的专属回复风格</p>
                 </div>
             `;
             return;
@@ -441,23 +727,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         config.customStyles.forEach(style => {
             const styleElement = document.createElement('div');
-            styleElement.className = 'flex items-center justify-between p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-2xl transition-all duration-200 hover:bg-white/70 dark:hover:bg-white/10';
+            styleElement.className = 'custom-style-item';
             styleElement.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
-                        <span class="text-lg text-white">🎭</span>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(style.name)}</div>
-                        ${style.description ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs truncate" title="${escapeHtml(style.description)}">${escapeHtml(style.description)}</div>` : ''}
+                <div class="custom-style-info">
+                    <div class="custom-style-avatar">🎭</div>
+                    <div class="custom-style-content">
+                        <h4>${escapeHtml(style.name)}</h4>
+                        ${style.description ? `<p title="${escapeHtml(style.description)}">${escapeHtml(style.description)}</p>` : ''}
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button class="edit-style p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20" data-id="${style.id}" title="编辑风格">
-                        <span class="text-sm">✏️</span>
+                <div class="custom-style-actions">
+                    <button class="edit-style" data-id="${style.id}" title="编辑风格">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
                     </button>
-                    <button class="delete-style p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20" data-id="${style.id}" title="删除风格">
-                        <span class="text-sm">🗑️</span>
+                    <button class="delete-style" data-id="${style.id}" title="删除风格">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"/>
+                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
                     </button>
                 </div>
             `;
@@ -491,15 +783,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.customStyleName.value = style.name;
         elements.customStyleDescription.value = style.description;
         
+        // Clear template selection and validation messages
+        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('selected'));
+        clearValidationMessage(elements.customStyleName);
+        clearValidationMessage(elements.customStyleDescription);
+        
         // Update modal title
-        const modalHeader = elements.customStyleModal.querySelector('.modal-header h3');
+        const modalHeader = elements.customStyleModal.querySelector('.modal-title-section h3');
         modalHeader.textContent = '编辑自定义风格';
         
         // Update save button text
-        elements.saveCustomStyle.textContent = '更新风格';
+        elements.saveCustomStyle.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17,21 17,13 7,13 7,21"/>
+                <polyline points="7,3 7,8 15,8"/>
+            </svg>
+            更新风格
+        `;
         
         // Show modal
         elements.customStyleModal.classList.remove('hidden');
+        
+        // Focus on name input
+        setTimeout(() => elements.customStyleName.focus(), 100);
     }
 
     function deleteCustomStyle(styleId) {
