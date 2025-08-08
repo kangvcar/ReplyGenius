@@ -1,0 +1,71 @@
+# Jekyll Configuration for ReplyGenius Landing Page
+
+# Site settings
+title: ReplyGenius - AI Twitter Assistant
+description: Generate witty, contextual Twitter replies instantly with AI
+url: "https://kangvcar.github.io"
+baseurl: "/ReplyGenius"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO settings
+author: ReplyGenius Team
+twitter:
+  username: replygenius
+  card: summary_large_image
+
+# Social media
+social:
+  name: ReplyGenius
+  links:
+    - https://github.com/kangvcar/ReplyGenius
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - deployment-guide.md
+  - node_modules/
+  - vendor/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile*
+  - "*.gemspec"
+
+# Include dotfiles
+include:
+  - .nojekyll
+
+# Sass settings
+sass:
+  style: compressed
+  sass_dir: _sass
+
+# Permalink structure
+permalink: pretty
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Default settings
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
