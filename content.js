@@ -251,6 +251,15 @@
         }
     }
 
+    // Sanitize user input to prevent injection attacks
+    function sanitizeInput(input) {
+        if (typeof input !== 'string') return '';
+        return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/javascript:/gi, '')
+                    .replace(/on\w+\s*=/gi, '')
+                    .trim();
+    }
+
     // Extract content from tweet
     function extractTweetContent(tweet) {
         const tweetTextElement = tweet.querySelector(SELECTORS.tweetText);
@@ -272,7 +281,21 @@
             content += node.textContent;
         }
 
-        return content.trim();
+        // Sanitize and validate the extracted content
+        const sanitizedContent = sanitizeInput(content.trim());
+        
+        // Validate content length (reasonable limits)
+        if (sanitizedContent.length > 2000) { // Twitter's theoretical limit
+            console.warn('ReplyGenius: Tweet content too long, truncating');
+            return sanitizedContent.substring(0, 2000);
+        }
+        
+        if (sanitizedContent.length < 1) {
+            console.warn('ReplyGenius: Tweet content is empty after sanitization');
+            return null;
+        }
+
+        return sanitizedContent;
     }
 
     // Get the actual model to use for API calls
@@ -283,47 +306,51 @@
         return config.aiModel || 'gpt-3.5-turbo';
     }
 
-    // Generate AI reply using configured service
+    // Generate AI reply using background script (Chrome Web Store compliance)
     async function generateAIReply(tweetContent) {
         const prompt = buildPrompt(tweetContent);
         const activeModel = getActiveModel();
         
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
-            },
-            body: JSON.stringify({
-                model: activeModel,
-                messages: [
-                    {
-                        role: 'system',
-                        content: getSystemPrompt()
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
+        const payload = {
+            model: activeModel,
+            messages: [
+                {
+                    role: 'system',
+                    content: getSystemPrompt()
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            max_tokens: 280,
+            temperature: 0.8
+        };
+
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({
+                type: 'API_REQUEST',
+                config: config,
+                payload: payload,
+                endpoint: 'chat/completions'
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                    return;
+                }
+                
+                if (response && response.success) {
+                    const reply = response.data.choices?.[0]?.message?.content?.trim();
+                    if (!reply) {
+                        reject(new Error('AI 服务返回空回复'));
+                    } else {
+                        resolve(reply);
                     }
-                ],
-                max_tokens: 280,
-                temperature: 0.8
-            })
+                } else {
+                    reject(new Error(response?.error || '生成回复失败'));
+                }
+            });
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content?.trim();
-        
-        if (!reply) {
-            throw new Error('AI 服务返回空回复');
-        }
-
-        return reply;
     }
 
     // Get human-like elements to reduce AI feel
@@ -1089,6 +1116,64 @@ ${styleInfo.examples}
         }
     `;
     document.head.appendChild(style);
+
+    // Global error handlers for better debugging and stability
+    window.addEventListener('error', (event) => {
+        if (event.filename && event.filename.includes('content.js')) {
+            console.error('ReplyGenius: Content script error:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error
+            });
+            
+            // Reset processing state if error occurs during processing
+            if (isProcessing) {
+                isProcessing = false;
+                console.log('ReplyGenius: Reset processing state due to error');
+            }
+            
+            // Send error to background script for logging
+            try {
+                chrome.runtime.sendMessage({
+                    type: 'LOG_ERROR',
+                    error: {
+                        message: event.message,
+                        source: 'content_script',
+                        lineno: event.lineno,
+                        colno: event.colno
+                    }
+                });
+            } catch (e) {
+                console.error('ReplyGenius: Failed to send error to background:', e);
+            }
+        }
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+        console.error('ReplyGenius: Unhandled promise rejection in content script:', event.reason);
+        
+        // Reset processing state if error occurs during processing
+        if (isProcessing) {
+            isProcessing = false;
+            console.log('ReplyGenius: Reset processing state due to unhandled rejection');
+        }
+        
+        // Send error to background script for logging
+        try {
+            chrome.runtime.sendMessage({
+                type: 'LOG_ERROR',
+                error: {
+                    message: event.reason?.message || 'Unhandled promise rejection',
+                    source: 'content_script_promise',
+                    stack: event.reason?.stack
+                }
+            });
+        } catch (e) {
+            console.error('ReplyGenius: Failed to send promise rejection to background:', e);
+        }
+    });
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {

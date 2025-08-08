@@ -312,45 +312,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         button.disabled = true;
 
         try {
-            const response = await fetch(`${config.baseUrl}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${config.apiKey}`
-                },
-                body: JSON.stringify({
-                    model: activeModel,
-                    messages: [{ role: 'user', content: 'Hello' }],
-                    max_tokens: 5
-                })
+            // Use background script for API testing (Chrome Web Store compliance)
+            const result = await new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage({
+                    type: 'API_REQUEST',
+                    config: {
+                        baseUrl: config.baseUrl,
+                        apiKey: config.apiKey
+                    },
+                    payload: {
+                        model: activeModel,
+                        messages: [{ role: 'user', content: 'Hello' }],
+                        max_tokens: 5
+                    },
+                    endpoint: 'chat/completions'
+                }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message));
+                    } else if (response && response.success) {
+                        resolve(response);
+                    } else {
+                        reject(new Error(response?.error || '测试连接失败'));
+                    }
+                });
             });
 
-            if (response.ok) {
-                // Show success validation for inputs
-                showValidationMessage(elements.baseUrl, 'URL连接成功', 'success');
-                showValidationMessage(elements.apiKey, 'API Key有效', 'success');
-                if (config.aiModel === 'custom') {
-                    showValidationMessage(elements.customModel, '模型可用', 'success');
-                }
-                showStatusMessage('✅ 连接成功！API 配置有效', 'success');
-            } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-                
-                // Show specific error based on response
-                if (response.status === 401) {
-                    showValidationMessage(elements.apiKey, 'API Key无效或已过期', 'error');
-                } else if (response.status === 404) {
-                    showValidationMessage(elements.baseUrl, 'API端点不存在', 'error');
-                } else if (errorMessage.includes('model')) {
-                    const targetElement = config.aiModel === 'custom' ? elements.customModel : elements.aiModel;
-                    showValidationMessage(targetElement, '模型不可用', 'error');
-                }
-                
-                throw new Error(errorMessage);
+            // Show success validation for inputs
+            showValidationMessage(elements.baseUrl, 'URL连接成功', 'success');
+            showValidationMessage(elements.apiKey, 'API Key有效', 'success');
+            if (config.aiModel === 'custom') {
+                showValidationMessage(elements.customModel, '模型可用', 'success');
             }
+            showStatusMessage('✅ 连接成功！API 配置有效', 'success');
+            
         } catch (error) {
             console.error('API Connection test failed:', error);
+            
+            // Show specific error based on error message
+            const errorMessage = error.message.toLowerCase();
+            if (errorMessage.includes('unauthorized') || errorMessage.includes('invalid api key')) {
+                showValidationMessage(elements.apiKey, 'API Key无效或已过期', 'error');
+            } else if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+                showValidationMessage(elements.baseUrl, 'API端点不存在', 'error');
+            } else if (errorMessage.includes('model')) {
+                const targetElement = config.aiModel === 'custom' ? elements.customModel : elements.aiModel;
+                showValidationMessage(targetElement, '模型不可用', 'error');
+            }
+            
             showStatusMessage(`❌ 连接失败: ${error.message}`, 'error');
         } finally {
             // Restore button state

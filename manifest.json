@@ -1,21 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "ReplyGenius - Twitter AI Assistant",
+  "name": "ReplyGenius - AI Twitter Assistant",
   "version": "1.0.0",
-  "description": "Genius-level AI replies for Twitter. Generate witty, contextual responses instantly with your personal AI assistant.",
+  "description": "Generate witty, contextual Twitter replies instantly with AI. Choose from 8 reply styles, support multiple languages, and seamlessly integrate with Twitter's interface.",
   
   "permissions": [
     "storage",
     "activeTab",
-    "scripting",
-    "clipboardWrite"
+    "scripting"
   ],
   
   "host_permissions": [
     "https://twitter.com/*",
-    "https://x.com/*",
-    "https://api.openai.com/*"
+    "https://x.com/*"
   ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   
   "background": {
     "service_worker": "background.js"
@@ -50,8 +52,11 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "icons/*"],
+      "resources": ["icons/*"],
       "matches": ["https://twitter.com/*", "https://x.com/*"]
     }
-  ]
+  ],
+
+  "homepage_url": "https://replygenius.app",
+  "author": "ReplyGenius Team"
 }

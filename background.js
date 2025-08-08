@@ -1,12 +1,18 @@
-// XX Chrome Extension - Background Service Worker
-console.log('XX: Background service worker starting...');
+// ReplyGenius Chrome Extension - Background Service Worker
+console.log('ReplyGenius: Background service worker starting...');
+
+// Rate limiting storage
+const rateLimiter = new Map();
+
+// API request queue to prevent concurrent issues
+const requestQueue = new Map();
 
 // Extension installation and update handling
 chrome.runtime.onInstalled.addListener(async (details) => {
-    console.log('XX: Extension installed/updated', details);
+    console.log('ReplyGenius: Extension installed/updated', details);
     
     if (details.reason === 'install') {
-        console.log('XX: First time installation');
+        console.log('ReplyGenius: First time installation');
         
         // Set up default configuration
         const defaultConfig = {
@@ -21,13 +27,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         };
         
         await chrome.storage.sync.set(defaultConfig);
-        console.log('XX: Default configuration set');
+        console.log('ReplyGenius: Default configuration set');
         
         // Open welcome page or popup
         chrome.action.openPopup?.();
         
     } else if (details.reason === 'update') {
-        console.log('XX: Extension updated from version', details.previousVersion);
+        console.log('ReplyGenius: Extension updated from version', details.previousVersion);
         
         // Handle any migration logic for updates if needed
         await handleUpdateMigration(details.previousVersion);
@@ -36,14 +42,18 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(() => {
-    console.log('XX: Extension startup');
+    console.log('ReplyGenius: Extension startup');
 });
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('XX: Received message:', message, 'from:', sender);
+    console.log('ReplyGenius: Received message:', message, 'from:', sender);
     
     switch (message.type) {
+        case 'API_REQUEST':
+            handleAPIRequest(message, sendResponse);
+            return true;
+            
         case 'GET_CONFIG':
             handleGetConfig(sendResponse);
             return true; // Keep message channel open for async response
@@ -61,13 +71,111 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return true;
             
         case 'LOG_ERROR':
-            console.error('XX: Error from content script:', message.error);
+            console.error('ReplyGenius: Error from content script:', message.error);
             break;
             
         default:
-            console.warn('XX: Unknown message type:', message.type);
+            console.warn('ReplyGenius: Unknown message type:', message.type);
     }
 });
+
+// Handle API requests through background script (Chrome Web Store compliance)
+async function handleAPIRequest(message, sendResponse) {
+    try {
+        const { config, payload, endpoint = 'chat/completions' } = message;
+        
+        // Rate limiting check
+        if (!checkRateLimit(message.tabId || sender?.tab?.id || 'unknown')) {
+            throw new Error('请求过于频繁，请稍后再试');
+        }
+        
+        // Input validation
+        if (!config?.baseUrl || !config?.apiKey) {
+            throw new Error('API配置不完整');
+        }
+        
+        if (!payload) {
+            throw new Error('请求载荷不能为空');
+        }
+        
+        console.log('ReplyGenius: Making API request to:', `${config.baseUrl}/${endpoint}`);
+        
+        const response = await fetch(`${config.baseUrl}/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.apiKey}`,
+                'User-Agent': 'ReplyGenius/1.0.0'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { error: { message: errorText } };
+            }
+            
+            const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            console.error('ReplyGenius: API request failed:', errorMessage);
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log('ReplyGenius: API request successful');
+        sendResponse({ success: true, data });
+        
+    } catch (error) {
+        console.error('ReplyGenius: API request error:', error);
+        sendResponse({ 
+            success: false, 
+            error: error.message || '网络请求失败',
+            code: error.code || 'NETWORK_ERROR'
+        });
+    }
+}
+
+// Rate limiting function
+function checkRateLimit(identifier) {
+    const now = Date.now();
+    const key = `rate_${identifier}`;
+    const requests = rateLimiter.get(key) || [];
+    
+    // Remove requests older than 1 minute
+    const recentRequests = requests.filter(time => now - time < 60000);
+    
+    // Allow max 20 requests per minute per tab/user
+    if (recentRequests.length >= 20) {
+        console.warn('ReplyGenius: Rate limit exceeded for:', identifier);
+        return false;
+    }
+    
+    recentRequests.push(now);
+    rateLimiter.set(key, recentRequests);
+    
+    // Clean up old entries periodically
+    if (Math.random() < 0.1) { // 10% chance
+        cleanupRateLimiter();
+    }
+    
+    return true;
+}
+
+// Cleanup old rate limiting entries
+function cleanupRateLimiter() {
+    const now = Date.now();
+    for (const [key, requests] of rateLimiter.entries()) {
+        const recentRequests = requests.filter(time => now - time < 60000);
+        if (recentRequests.length === 0) {
+            rateLimiter.delete(key);
+        } else {
+            rateLimiter.set(key, recentRequests);
+        }
+    }
+}
 
 // Handle tab updates to inject content script if needed
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -78,7 +186,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     
     // Check if it's Twitter/X
     if (tab.url && (tab.url.includes('twitter.com') || tab.url.includes('x.com'))) {
-        console.log('XX: Twitter/X page detected:', tab.url);
+        console.log('ReplyGenius: Twitter/X page detected:', tab.url);
         
         try {
             // Ensure content script is injected
@@ -86,10 +194,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
                 target: { tabId: tabId },
                 files: ['content.js']
             });
-            console.log('XX: Content script injected successfully');
+            console.log('ReplyGenius: Content script injected successfully');
         } catch (error) {
             // Content script might already be injected, or injection failed
-            console.log('XX: Content script injection skipped or failed:', error.message);
+            console.log('ReplyGenius: Content script injection skipped or failed:', error.message);
         }
     }
 });
@@ -100,7 +208,7 @@ async function handleGetConfig(sendResponse) {
         const config = await chrome.storage.sync.get();
         sendResponse({ success: true, config });
     } catch (error) {
-        console.error('XX: Failed to get config:', error);
+        console.error('ReplyGenius: Failed to get config:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -109,7 +217,7 @@ async function handleGetConfig(sendResponse) {
 async function handleUpdateConfig(config, sendResponse) {
     try {
         await chrome.storage.sync.set(config);
-        console.log('XX: Configuration updated:', config);
+        console.log('ReplyGenius: Configuration updated:', config);
         
         // Notify all Twitter/X tabs about config update
         const tabs = await chrome.tabs.query({ 
@@ -124,13 +232,13 @@ async function handleUpdateConfig(config, sendResponse) {
                 });
             } catch (error) {
                 // Tab might not have content script loaded yet
-                console.log('XX: Could not notify tab', tab.id, error.message);
+                console.log('ReplyGenius: Could not notify tab', tab.id, error.message);
             }
         }
         
         sendResponse({ success: true });
     } catch (error) {
-        console.error('XX: Failed to update config:', error);
+        console.error('ReplyGenius: Failed to update config:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -138,32 +246,36 @@ async function handleUpdateConfig(config, sendResponse) {
 // Test API connectivity
 async function handleTestAPI(config, sendResponse) {
     try {
-        console.log('XX: Testing API connection...');
+        console.log('ReplyGenius: Testing API connection...');
         
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
-            },
-            body: JSON.stringify({
-                model: config.aiModel,
-                messages: [{ role: 'user', content: 'Test' }],
-                max_tokens: 5
-            })
+        const payload = {
+            model: config.aiModel === 'custom' ? config.customModel : config.aiModel,
+            messages: [{ role: 'user', content: 'Test' }],
+            max_tokens: 5
+        };
+        
+        // Use our API proxy function
+        const mockMessage = {
+            type: 'API_REQUEST',
+            config,
+            payload,
+            endpoint: 'chat/completions'
+        };
+        
+        // Create a promise to handle the async response
+        const testResult = await new Promise((resolve) => {
+            handleAPIRequest(mockMessage, resolve);
         });
-
-        if (response.ok) {
-            console.log('XX: API test successful');
+        
+        if (testResult.success) {
+            console.log('ReplyGenius: API test successful');
             sendResponse({ success: true });
         } else {
-            const errorData = await response.json();
-            const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-            console.error('XX: API test failed:', errorMessage);
-            sendResponse({ success: false, error: errorMessage });
+            console.error('ReplyGenius: API test failed:', testResult.error);
+            sendResponse({ success: false, error: testResult.error });
         }
     } catch (error) {
-        console.error('XX: API test error:', error);
+        console.error('ReplyGenius: API test error:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -171,7 +283,7 @@ async function handleTestAPI(config, sendResponse) {
 // Generate AI reply (fallback if content script can't do it directly)
 async function handleGenerateReply(message, sendResponse) {
     try {
-        console.log('XX: Generating reply for:', message.tweetContent);
+        console.log('ReplyGenius: Generating reply for:', message.tweetContent);
         
         const config = await chrome.storage.sync.get();
         if (!config.apiKey || !config.baseUrl) {
@@ -181,40 +293,41 @@ async function handleGenerateReply(message, sendResponse) {
         const prompt = buildPrompt(message.tweetContent, config);
         const systemPrompt = getSystemPrompt();
         
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
-            },
-            body: JSON.stringify({
-                model: config.aiModel || 'gpt-3.5-turbo',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: prompt }
-                ],
-                max_tokens: 280,
-                temperature: 0.8
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content?.trim();
+        const payload = {
+            model: config.aiModel === 'custom' ? config.customModel : config.aiModel,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: 280,
+            temperature: 0.8
+        };
         
-        if (!reply) {
-            throw new Error('AI service returned empty reply');
+        // Use our API proxy function
+        const apiMessage = {
+            type: 'API_REQUEST',
+            config,
+            payload,
+            endpoint: 'chat/completions'
+        };
+        
+        const result = await new Promise((resolve) => {
+            handleAPIRequest(apiMessage, resolve);
+        });
+        
+        if (result.success) {
+            const reply = result.data.choices?.[0]?.message?.content?.trim();
+            if (!reply) {
+                throw new Error('AI service returned empty reply');
+            }
+            console.log('ReplyGenius: Reply generated:', reply);
+            sendResponse({ success: true, reply });
+        } else {
+            throw new Error(result.error);
         }
-
-        console.log('XX: Reply generated:', reply);
-        sendResponse({ success: true, reply });
         
     } catch (error) {
-        console.error('XX: Failed to generate reply:', error);
+        console.error('ReplyGenius: Failed to generate reply:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -249,7 +362,7 @@ function getSystemPrompt() {
 
 // Handle extension updates and migrations
 async function handleUpdateMigration(previousVersion) {
-    console.log('XX: Handling migration from version:', previousVersion);
+    console.log('ReplyGenius: Handling migration from version:', previousVersion);
     
     try {
         const config = await chrome.storage.sync.get();
@@ -258,60 +371,47 @@ async function handleUpdateMigration(previousVersion) {
         const updates = {};
         
         if (!config.hasOwnProperty('autoSubmit')) {
-            updates.autoSubmit = false;
+            updates.autoSubmit = true;
         }
         
         // Add more migration logic as needed for future versions
         
         if (Object.keys(updates).length > 0) {
             await chrome.storage.sync.set(updates);
-            console.log('XX: Migration updates applied:', updates);
+            console.log('ReplyGenius: Migration updates applied:', updates);
         }
         
     } catch (error) {
-        console.error('XX: Migration failed:', error);
+        console.error('ReplyGenius: Migration failed:', error);
     }
 }
 
 // Monitor storage changes for debugging
 chrome.storage.onChanged.addListener((changes, areaName) => {
-    console.log('XX: Storage changed in', areaName, changes);
+    console.log('ReplyGenius: Storage changed in', areaName, changes);
 });
 
 // Handle extension errors
 chrome.runtime.onSuspend?.addListener(() => {
-    console.log('XX: Extension suspended');
-});
-
-// Context menu for advanced users (optional)
-chrome.contextMenus?.onClicked?.addListener((info, tab) => {
-    if (info.menuItemId === 'xx-generate-reply' && tab) {
-        chrome.tabs.sendMessage(tab.id, { 
-            type: 'CONTEXT_MENU_GENERATE',
-            selectedText: info.selectionText 
-        });
-    }
-});
-
-// Set up context menu if available
-chrome.runtime.onInstalled.addListener(() => {
-    if (chrome.contextMenus) {
-        chrome.contextMenus.create({
-            id: 'xx-generate-reply',
-            title: 'Generate AI Reply',
-            contexts: ['selection'],
-            documentUrlPatterns: ['https://twitter.com/*', 'https://x.com/*']
-        });
-    }
+    console.log('ReplyGenius: Extension suspended');
 });
 
 // Keep service worker alive with periodic tasks
 function keepAlive() {
     // Simple heartbeat to prevent service worker from being killed
-    console.log('XX: Service worker heartbeat');
+    console.log('ReplyGenius: Service worker heartbeat');
 }
 
 // Set up periodic keepalive (every 25 seconds, under the 30s limit)
 setInterval(keepAlive, 25000);
 
-console.log('XX: Background service worker initialized successfully');
+// Global error handlers
+self.addEventListener('error', (event) => {
+    console.error('ReplyGenius: Background script error:', event.error);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+    console.error('ReplyGenius: Background script unhandled rejection:', event.reason);
+});
+
+console.log('ReplyGenius: Background service worker initialized successfully');
