@@ -1,4 +1,136 @@
-# ReplyGenius - Twitter AI助手Chrome扩展项目需求文档
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# ReplyGenius - Twitter AI Assistant Chrome Extension
+
+This is a Chrome browser extension that provides AI-powered intelligent reply generation for Twitter users. The extension seamlessly integrates into Twitter's interface to help users generate high-quality, contextual tweet replies.
+
+## Development Commands
+
+### Testing and Debugging
+- **Load Extension**: Open `chrome://extensions/`, enable "Developer mode", click "Load unpacked" and select the project folder
+- **Reload Extension**: Click the reload button on the extension card in `chrome://extensions/` after making changes
+- **Debug Popup**: Right-click the extension icon in toolbar → "Inspect popup" to open DevTools for popup.html
+- **Debug Content Script**: Open DevTools on Twitter/X page → Console tab to see content script logs with prefix "ReplyGenius:"
+- **Debug Background**: Go to `chrome://extensions/` → click "service worker" link under extension to debug background.js
+
+### No Build Process Required
+This extension uses vanilla JavaScript without any build tools:
+- Direct file editing and Chrome reload for development
+- No npm install, webpack, or transpilation needed
+- All files are directly loadable by Chrome
+
+## Architecture Overview
+
+### Core Components
+
+**Chrome Extension Structure (Manifest V3):**
+- `manifest.json`: Extension configuration with permissions and content scripts
+- `popup.html/js/css`: Configuration panel with shadcn/ui design
+- `content.js`: Injected into Twitter pages, handles UI integration and AI reply generation
+- `background.js`: Service worker for API requests and extension lifecycle management
+
+**Key Integration Points:**
+- **Twitter UI Integration**: content.js uses MutationObserver to detect new tweets and inject AI buttons
+- **AI API Communication**: background.js handles all API requests to maintain Chrome Web Store compliance
+- **Configuration Management**: Chrome storage API for syncing settings across devices
+- **Cross-Component Messaging**: chrome.runtime.sendMessage for popup ↔ content ↔ background communication
+
+### Twitter Integration Details
+
+**Button Injection System:**
+- Uses CSS selectors targeting Twitter's DOM structure: `[data-testid="tweet"]`, `[role="group"]`
+- Custom SVG icon button styled to match Twitter's native buttons
+- Mutation observer pattern to handle dynamic content loading
+
+**Reply Generation Flow:**
+1. Extract tweet content using `[data-testid="tweetText"]` selector
+2. Build AI prompt with user's style preferences and context
+3. Send API request through background script (Chrome Web Store compliance)
+4. Insert generated reply into Draft.js editor using multiple fallback methods
+5. Auto-submit or manual review based on user preference
+
+**Draft.js Integration Challenges:**
+- Twitter uses Draft.js rich text editor which requires special handling
+- Multiple insertion methods implemented: React event handlers, execCommand, clipboard API, keyboard simulation, DOM manipulation
+- Sequential fallback system to ensure compatibility across Twitter updates
+
+### Configuration System
+
+**Storage Architecture:**
+- Chrome sync storage for cross-device configuration syncing
+- Default configuration with safe fallbacks
+- Real-time validation with visual feedback
+
+**Style System:**
+- 8 built-in reply styles (humor, professional, supportive, etc.)
+- Custom style creation with template system
+- Dynamic prompt building based on selected style
+
+**AI Integration:**
+- Support for multiple AI models (OpenAI GPT, Claude, custom models)
+- Configurable base URLs for different API providers
+- Rate limiting and error handling for API requests
+
+## Key Technical Considerations
+
+### Chrome Extension Requirements
+- **Manifest V3 Compliance**: Uses service workers instead of background pages
+- **Content Security Policy**: No inline scripts, strict CSP for security
+- **Permissions**: Minimal permissions (storage, activeTab, scripting)
+- **Host Permissions**: Limited to twitter.com and x.com domains
+
+### Twitter UI Compatibility
+- **Selector Stability**: Uses data-testid attributes which are more stable than CSS classes
+- **Theme Support**: Adapts to Twitter's light/dark/dim themes automatically
+- **Dynamic Content**: Handles Twitter's SPA navigation and infinite scroll
+
+### AI Integration Security
+- **API Key Storage**: Stored locally using Chrome storage API, never transmitted except for API calls
+- **Input Sanitization**: User content is sanitized to prevent XSS and injection attacks
+- **Rate Limiting**: Background script implements per-tab rate limiting to prevent API abuse
+
+## Important Prompt System
+
+**System Prompt Philosophy:**
+The extension uses a sophisticated prompt system designed to generate natural, engaging replies that sound human-like rather than AI-generated. Key principles:
+
+- **Anti-AI Detection**: Uses 212 human-like phrases and expressions to avoid sounding robotic
+- **Context Awareness**: Analyzes tweet sentiment and context to match appropriate response style
+- **Length Control**: Strict 2-35 character limit for Twitter-appropriate responses
+- **Cultural Elements**: Incorporates internet slang, generational references, and conversational patterns
+
+**Style Templates:**
+Each of the 8 built-in styles has detailed personality definitions, requirements, and example phrases to ensure consistent character in responses.
+
+## Development Guidelines
+
+### Code Style
+- Vanilla JavaScript (ES6+) without frameworks
+- Extensive error handling and logging with "ReplyGenius:" prefix
+- Async/await for all API operations
+- Chrome extension best practices for security and performance
+
+### Adding New Features
+1. **UI Changes**: Modify popup.html/css following shadcn/ui patterns
+2. **Twitter Integration**: Update content.js selectors and event handlers
+3. **API Changes**: Update background.js message handlers
+4. **Configuration**: Add new settings to default config object and storage handling
+
+### Testing Approach
+- Manual testing on Twitter with various tweet types and themes
+- API connectivity testing with multiple providers
+- Cross-browser testing (Chrome, Edge, other Chromium browsers)
+- User configuration persistence testing
+
+### Common Issues
+- **Twitter UI Updates**: Selectors may break when Twitter updates their interface
+- **Draft.js Changes**: Text insertion methods may need updates for new editor versions
+- **API Rate Limits**: Background script includes rate limiting to prevent service disruption
+- **Content Script Injection**: May need re-injection after Twitter navigation
+
+The codebase is well-structured for a Chrome extension with clear separation of concerns and robust error handling throughout.
 
 ## 项目概述
 
